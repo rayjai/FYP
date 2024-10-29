@@ -1,0 +1,104 @@
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f0f0f0;
+  }
+  
+  .contain{
+    padding: 10px 20px;
+  }
+  .form-container {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 500px;
+  }
+  
+  .form-container h2 {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  .form-group {
+    margin-bottom: 20px;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 10px;
+  }
+  
+  .form-group input, .form-group textarea, .form-group select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  
+  button[type="submit"] {
+    background-color: #4CAF50;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  button[type="submit"]:hover {
+    background-color: #3e8e41;
+  }
+
+  .grid2x1{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .grid-3x2 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3 columns */
+    gap: 16px; /* Space between cards */
+}
+
+.card {
+    width: 100%; /* Full width of the grid cell */
+    height: 350px; /* Set a fixed height */
+    display: flex;
+    flex-direction: column; /* Align items vertically */
+    justify-content: space-between; /* Space between content */
+    border: 1px solid #ddd; /* Optional: border for better visibility */
+    border-radius: 8px; /* Rounded corners */
+    overflow: hidden; /* Prevent overflow */
+}
+
+.card-img-top {
+    width: 100%; /* Full width */
+    max-height: 200px; /* Maximum height for images */
+    object-fit: contain; /* Contain the image without cropping */
+    margin: auto; /* Center the image */
+}
+
+.card-body {
+    padding: 16px; /* Space inside the card */
+}
+
+@media (max-width: 768px) {
+    .grid-3x2 {
+        grid-template-columns: repeat(2, 1fr); /* 2 columns on smaller screens */
+    }
+}
+
+@media (max-width: 480px) {
+    .grid-3x2 {
+        grid-template-columns: 1fr; /* 1 column on very small screens */
+    }
+}
+
+.return-btn i{
+    position: absolute;
+    font-size: 25px;
+    color: #000000;
+}

@@ -1,0 +1,181 @@
+body {
+    background: url("@/assets/loginBG.JPG") no-repeat;
+    background-size: cover;
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+
+.wrapper {
+    width: 420px;
+    background: transparent;
+    border: 2px solid rgba(255,255,255,0.2);
+    backdrop-filter: blur(20px);
+    color: #fff;
+    border-radius: 10px;
+    padding: 30px 40px;
+}
+
+.wrapper h1 {
+    font-size: 36px;
+    text-align: center;
+}
+
+.wrapper .typebox{
+    width: 100%;
+    height: 50px;
+    margin: 30px 0;
+    position:relative;
+}
+
+.typebox input{
+    width: 100%;
+    height: 100%;
+    background:transparent;
+    border: none;
+    outline: none;
+    border: 1px solid #f5f5f5;
+    border-radius: 40px;
+    font-size: 16px;
+    color: #fff;
+    padding: 20px 45px 20px 20px;
+}
+
+.typebox input::placeholder{
+    color: #fff;
+}
+
+.typebox i{
+    position: absolute;
+    right:20px;
+    top:30%;
+    font-size: 20px;
+}
+
+.wrapper .btn{
+    width: 100%;
+    height: 45px;
+    background: #fff;
+    border: none;
+    outline: none;
+    border-radius: 40px;
+    font-size: 16px;
+    color: #333;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    font-weight: 600;
+}
+
+.wrapper .register-link{
+    font-size: 14.5px;
+    text-align: center;
+    margin: 20px 0 15px;
+}
+.register-link p a{
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.register-link p a:hover{
+    text-decoration: underline;
+}
+
+.return-btn i{
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    font-size: 25px;
+    color: #fff;
+}
+
+.labelGroup{
+    margin-bottom: 10px;
+}
+.wrapper .typeboxsignup{
+    width: 100%;
+    height: 50px;
+    margin: 0;
+    position:relative;
+}
+
+.typeboxsignup input{
+    width: 100%;
+    height: 100%;
+    background:transparent;
+    border: none;
+    outline: none;
+    border: 1px solid #f5f5f5;
+    border-radius: 40px;
+    font-size: 16px;
+    color: #fff;
+    padding: 20px 45px 20px 20px;
+}
+
+.typeboxsignup input::placeholder{
+    color: #fff;
+}
+
+.typeboxsignup i{
+    position: absolute;
+    right:20px;
+    top:30%;
+    font-size: 20px;
+}
+
+.typeboxsignup select{
+    width: 100%;
+    height: 100%;
+    background:transparent;
+    border: none;
+    outline: none;
+    border: 1px solid #f5f5f5;
+    border-radius: 40px;
+    font-size: 16px;
+    color: #fff;
+    padding: 10px 45px 10px 20px;
+}
+
+.typeboxsignup select::placeholder{
+    color: #fff;
+}
+
+.wrapper .selectsignup{
+    width: 100%;
+    height: 50px;
+    margin: 0;
+    position:relative;
+}
+
+.selectsignup input{
+    width: 100%;
+    height: 100%;
+    background:transparent;
+    border: none;
+    outline: none;
+    border: 1px solid #f5f5f5;
+    border-radius: 40px;
+    font-size: 16px;
+    color: #fff;
+    padding: 20px 45px 20px 20px;
+}
+
+.selectsignup input::placeholder{
+    color: #fff;
+}
+.v3dp__clearable i{
+    position: absolute;
+    right:180px;
+    top:-20%;
+    font-size: 20px;
+}
+.error-message {
+    margin-top: 10px;
+    font-size: 14px;
+    color: red; /* Or any color you prefer */
+}

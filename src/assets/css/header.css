@@ -1,0 +1,32 @@
+.notification-modal {
+    display: flex; /* Use flexbox for centering */
+    justify-content: center; /* Center horizontally */
+    position: fixed;
+    z-index: 2;
+    right: 0;
+    top: 0;
+    width: 50%; /* Half of the screen */
+    height: 100%; /* Full height */
+    background-color: rgba(255, 255, 255); /* White background with transparency */
+    overflow-y: auto; /* Enable scroll if needed */
+  }
+  
+  .notification-content {
+    padding: 20px;
+    background: white;
+  }
+  
+  .close-button {
+    cursor: pointer;
+    float: right;
+    font-size: 20px;
+  }
+
+  .notification-item{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid #ccc;
+    margin:20px 10px;
+  }

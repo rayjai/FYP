@@ -102,3 +102,26 @@
     font-size: 25px;
     color: #000000;
 }
+.button-container {
+  margin-top: 10px; /* Adjust as needed */
+}
+.button-container a{
+  margin-right: 10px; /* Adjust as needed */
+}
+.event-middle{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.register-info{
+  padding: 20px;
+  display: flex;
+  height: 100vh;
+  background-color: #f0f0f0dd;
+}
+.radio-select{
+  padding:10px;
+  width: 100px;
+  display: grid;
+  grid-template-columns: 20% 80%;
+}

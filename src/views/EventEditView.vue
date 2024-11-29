@@ -29,8 +29,10 @@ const fetchEvent = async () => {
     try {
         const response = await axios.get(`/api/event/detail/${eventId}`);
         event.value = response.data; // Assuming the API returns the event object
-        event.sections = response.data.sections;// Populate sections from API
+        event.sectionNumber = response.data.sectionNumber;
+        event.sections = response.data.sections; // Initialize with empty strings
         console.log(event.value);
+        console.log(event.sectionNumber);
     } catch (error) {
         console.error(error);
     }
@@ -122,7 +124,7 @@ onMounted(() => {
                             </select>
                         </div>
                         <div class="form-group" v-if="event.sectionNumber > 1">
-                            <div v-for="index in event.sectionNumber" :key="index">
+                            <div v-for="index in event.sectionNumber-0" :key="index">
                                 <label :for="'section' + index">Section {{ index }}</label>
                                 <input type="time" :id="'section' + index" v-model="event.sections[index - 1]"
                                     placeholder="Enter event time">

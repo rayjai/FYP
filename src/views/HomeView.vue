@@ -1,6 +1,59 @@
 <script setup>
 import Header from '@/components/Header.vue'
+import { onMounted, ref } from "vue";
+import { jwtDecode } from "jwt-decode";
 import '@/assets/css/home.css';
+
+const events = ref([]);
+const upcomingevents = ref([]);
+let isAdmin = ref(false);
+let isStudent = ref(false);
+
+
+const checkrole = async () => {
+  if (localStorage.getItem('token')) {
+    const token = localStorage.getItem('token');
+    const decoded = jwtDecode(token);
+    if (decoded.user.role === 'admin') {
+      isAdmin.value = true;
+    }
+    if (decoded.user.role === 'student') {
+      isStudent.value = true;
+    }
+  }
+}
+
+async function fetchHomeEvents() {
+  try {
+    const response = await fetch('/api/homeevent');
+    const data = await response.json();
+    events.value = data.events;
+    console.log('Home Events:', events.value);
+  } catch (error) {
+    console.error('Error fetching home events:', error);
+  }
+};
+
+async function fetchUpcomingEvents() {
+  try {
+    const response = await fetch('/api/upcomingevents');
+    const data = await response.json();
+    upcomingevents.value = data.upcomingEvents
+    console.log('Upcoming Events:', upcomingevents.value);
+    // Do something with the data, e.g., update a reactive variable
+  } catch (error) {
+    console.error('Error fetching upcoming events:', error);
+  }
+}
+
+
+
+onMounted(() => {
+  checkrole();
+  fetchHomeEvents();
+  fetchUpcomingEvents();
+});
+
 
 
 </script>
@@ -10,31 +63,17 @@ import '@/assets/css/home.css';
     <Header />
     <div id="carouselExampleDark" class="carousel carousel-dark slide" data-bs-ride="carousel">
       <div class="carousel-indicators">
-        <button type="button" data-bs-target="#carouselExampleDark" data-bs-slide-to="0" class="active"
-          aria-current="true" aria-label="Slide 1"></button>
-        <button type="button" data-bs-target="#carouselExampleDark" data-bs-slide-to="1" aria-label="Slide 2"></button>
-        <button type="button" data-bs-target="#carouselExampleDark" data-bs-slide-to="2" aria-label="Slide 3"></button>
+        <button v-for="(event, index) in events" :key="index" type="button" :data-bs-target="'#carouselExampleDark'"
+          :data-bs-slide-to="index" :class="{ active: index === 0 }" aria-current="index === 0"
+          :aria-label="'Slide ' + (index + 1)"></button>
       </div>
       <div class="carousel-inner">
-        <div class="carousel-item active" data-bs-interval="10000">
-          <img src="/src/assets/student_club1.png" class="d-block w-100" alt="...">
+        <div v-for="(event, index) in events" :key="event._id" class="carousel-item" :class="{ active: index === 0 }"
+          :data-bs-interval="10000">
+          <img :src="'http://localhost:3000/uploads/' + event.eventPoster" class="d-block w-100" alt="Event Image">
           <div class="carousel-caption d-none d-md-block">
-            <h5>First slide label</h5>
-            <p>Some representative placeholder content for the first slide.</p>
-          </div>
-        </div>
-        <div class="carousel-item" data-bs-interval="2000">
-          <img src="/src/assets/student_club2.png" class="d-block w-100" alt="...">
-          <div class="carousel-caption d-none d-md-block">
-            <h5>Second slide label</h5>
-            <p>Some representative placeholder content for the second slide.</p>
-          </div>
-        </div>
-        <div class="carousel-item">
-          <img src="/src/assets/line-chart.png" class="d-block w-100" alt="...">
-          <div class="carousel-caption d-none d-md-block">
-            <h5>Third slide label</h5>
-            <p>Some representative placeholder content for the third slide.</p>
+            <h5>{{ event.eventName }}</h5>
+            <p>{{ event.eventDescription }}</p>
           </div>
         </div>
       </div>
@@ -48,8 +87,8 @@ import '@/assets/css/home.css';
       </button>
     </div>
     <div id="description" class="description">
-        <p>Computer Science Society aims to provide intertesting activities for computer science major studnets.</p>
-        <p>Welcome to join us!</p>
+      <p>Computer Science Society aims to provide intertesting activities for computer science major studnets.</p>
+      <p>Welcome to join us!</p>
     </div>
     <div>
       <div class="container">
@@ -58,16 +97,45 @@ import '@/assets/css/home.css';
             <h1>Upcoming Events</h1>
           </div>
         </div>
-        <div class="row">
-          <div class="col-4">
-            <div class="card" style="width: 18rem;">
-              <img src="/src/assets/student_club2.png" class="card-img-top" alt="...">
-              <div class="card-body">
-                <h5 class="card-title">Card title</h5>
-                <p class="card-text">Some quick example text to build on the card title and make up the bulk of
-                  the
-                  card's content.</p>
-                <a href="#" class="btn btn-primary">Register</a>
+        <div v-if="isStudent">
+          <div class="row">
+            <div class="col-4" v-for="(event, index) in upcomingevents" :key="index">
+              <div class="card" style="width: 18rem;">
+                <img :src="'http://localhost:3000/uploads/' + event.eventPoster" class="card-img-top" alt="Event Image">
+                <div class="card-body">
+                  <h5 class="card-title">{{ event.eventName }}</h5>
+                  <p class="card-text">{{ event.eventDescription }}</p>
+                  <a :href="'/eventregister/' + event._id" class="btn btn-primary" @click.stop>Register</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div v-if="isAdmin">
+          <div class="row">
+            <div class="col-4" v-for="(event, index) in upcomingevents" :key="index">
+              <div class="card" style="width: 18rem;">
+                <img :src="'http://localhost:3000/uploads/' + event.eventPoster" class="card-img-top" alt="Event Image">
+                <div class="card-body">
+                  <h5 class="card-title">{{ event.eventName }}</h5>
+                  <p class="card-text">{{ event.eventDescription }}</p>
+                  <a :href="'/eventregister/' + event._id" class="btn btn-primary" @click.stop>Register</a>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+        <div v-if="!isAdmin&!isStudent">
+          <div class="row">
+            <div class="col-4" v-for="(event, index) in upcomingevents" :key="index">
+              <div class="card" style="width: 18rem;">
+                <img :src="'http://localhost:3000/uploads/' + event.eventPoster" class="card-img-top" alt="Event Image">
+                <div class="card-body">
+                  <h5 class="card-title">{{ event.eventName }}</h5>
+                  <p class="card-text">{{ event.eventDescription }}</p>
+                  <a href="/signin" class="btn btn-primary">Register</a>
+                </div>
               </div>
             </div>
           </div>

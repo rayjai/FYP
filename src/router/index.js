@@ -64,7 +64,7 @@ const router = createRouter({
       }
     },
     {
-      path: '/eventregister',
+      path: '/eventregister/:id',
       name: 'eventregister',
       component: () => import('../views/EventRegisterView.vue'),
       meta: {

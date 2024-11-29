@@ -88,9 +88,12 @@ onMounted(() => {
                         <div class="card-body">
                             <h5 class="card-title">{{ event.eventName }}</h5>
                             <p class="card-text">{{ event.eventDescription }}</p>
-                            <a :href="isAdmin ? '/event/edit/' + event._id : '/eventregister'" class="btn btn-primary" @click.stop>
-                                {{ isAdmin ? 'Edit' : 'Register' }}
+                            <div class="button-container">
+                            <a :href="'/event/edit/' + event._id" class="btn btn-primary" @click.stop>
+                                Edit
                             </a>
+                            <a :href="'/eventregister/' + event._id" class="btn btn-primary" @click.stop>Register</a>
+                            </div>  
                         </div>
                     </div>
                 </router-link>
@@ -107,33 +110,91 @@ onMounted(() => {
             </div>
         </div>
         <div v-if="isStudent">
-            <div class="container">
+            <div class="contain">
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb">
                         <li class="breadcrumb-item"><a href="/">Home</a></li>
                         <li class="breadcrumb-item active" aria-current="page">Events</li>
                     </ol>
                 </nav>
-                <div class="grid-3x2">
-                    <div class="card" v-for="event in events" :key="event.id" style="width: 18rem;">
-                        <img :src="event.eventPoster" class="card-img-top" alt="...">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex">
+                        <form class="d-flex me-2">
+                            <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+                            <button class="btn btn-outline-success" type="submit">Search</button>
+                        </form>
+                        <button class="btn btn-outline-info" type="button" @click="filterEvents">Filter</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid-3x2">
+                <router-link v-for="event in events" :key="event._id" :to="{ path: `/event/detail/${event._id}` }" class="card-link">
+                    <div class="card" style="width: 18rem;">
+                        <img :src="'http://localhost:3000/uploads/' + event.eventPoster" class="card-img-top" alt="...">
                         <div class="card-body">
                             <h5 class="card-title">{{ event.eventName }}</h5>
                             <p class="card-text">{{ event.eventDescription }}</p>
-                            <a :href="'/eventregister'" class="btn btn-primary">Register</a>
+                            <div class="button-container">
+                            <a :href="'/eventregister/' + event._id" class="btn btn-primary" @click.stop>Register</a>
+                            </div>  
                         </div>
                     </div>
+                </router-link>
+            </div>
+            <div class="container-fluid">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item" aria-current="page" :class="{ active: index == currentPage }"
+                            v-for="index in pages" :key="index">
+                            <a class="page-link" @click="fetchEvents(index)"> {{ index }}</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+        <div v-else>
+            <div class="contain">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/">Home</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Events</li>
+                    </ol>
+                </nav>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex">
+                        <form class="d-flex me-2">
+                            <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+                            <button class="btn btn-outline-success" type="submit">Search</button>
+                        </form>
+                        <button class="btn btn-outline-info" type="button" @click="filterEvents">Filter</button>
+                    </div>
                 </div>
-                <div class="container-fluid">
-                    <nav aria-label="Page navigation">
-                        <ul class="pagination justify-content-center">
-                            <li class="page-item" aria-current="page" :class="{ active: index == currentPage }"
-                                v-for="index in pages" :key="index">
-                                <a class="page-link" @click="fetchEvents(index)"> {{ index }}</a>
-                            </li>
-                        </ul>
-                    </nav>
-                </div>
+            </div>
+
+            <div class="grid-3x2">
+                <router-link v-for="event in events" :key="event._id" :to="{ path: `/event/detail/${event._id}` }" class="card-link">
+                    <div class="card" style="width: 18rem;">
+                        <img :src="'http://localhost:3000/uploads/' + event.eventPoster" class="card-img-top" alt="...">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ event.eventName }}</h5>
+                            <p class="card-text">{{ event.eventDescription }}</p>
+                            <div class="button-container">
+                            <a :href="'/signin'" class="btn btn-primary" @click.stop>Register</a>
+                            </div>  
+                        </div>
+                    </div>
+                </router-link>
+            </div>
+            <div class="container-fluid">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item" aria-current="page" :class="{ active: index == currentPage }"
+                            v-for="index in pages" :key="index">
+                            <a class="page-link" @click="fetchEvents(index)"> {{ index }}</a>
+                        </li>
+                    </ul>
+                </nav>
             </div>
         </div>
     </main>

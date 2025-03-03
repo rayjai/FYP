@@ -4,6 +4,8 @@ import { onMounted, ref, computed } from "vue";
 import { jwtDecode } from "jwt-decode";
 import '@/assets/css/event.css'
 import { useRoute } from 'vue-router';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
 
 let isAdmin = ref(false);
 let isStudent = ref(false);
@@ -36,15 +38,41 @@ async function fetchEventDetails() {
         console.error('Error fetching event details:', error);
     }
 };
+
+const events = ref([]);
+
+
+async function fetchRegisteredEvents() {
+    const eventId = route.params.id;
+
+    try {
+        const response = await fetch(`/api/admincheckregistrations/` + eventId);
+        const registrationData = await response.json();
+        events.value = registrationData;
+        console.log(registrationData);
+        transformedEvents.value = registrationData.map(student => ({
+            student_id: student.student_id,
+            attendance: student.attendance !== undefined ? (student.attendance ? 'Present' : 'Absent') : 'N/A',
+        }));
+
+    } catch (error) {
+        console.error('Error fetching registered events:', error);
+    }
+}
+
+const transformedEvents = ref([]);
 onMounted(() => {
     checkrole();
-    fetchEventDetails()
+    fetchEventDetails();
+    fetchRegisteredEvents();
 })
 
 </script>
 
 <template>
     <Header />
+    <div style="height: 80px;"></div>
+
     <div class="event-detail">
         <div class="event-middle">
             <img :src="'http://localhost:3000/uploads/' + event.eventPoster" alt="Event Image" class="event-image" />
@@ -65,7 +93,7 @@ onMounted(() => {
                 -
             </span>
             <span v-else>
-                {{ event.eventPrice }}
+                $ {{ event.eventPrice }}
             </span>
         </p>
         <p><strong>Venue: </strong> {{ event.eventVenue }} </p>
@@ -75,12 +103,33 @@ onMounted(() => {
                 <a :href="'/event/edit/' + event._id" class="btn btn-primary" @click.stop>
                     Edit
                 </a>
-                <a :href="'/eventregister/' + event._id" class="btn btn-primary" @click.stop>Register</a>
+                <div v-if="new Date(event.eventDateFrom) > new Date()">
+                    <a :href="'/eventregister/' + event._id" class="btn btn-primary" @click.stop>Register</a>
+                </div>
+            </div>
+            <div class="profile-info">
+                <div class="data-table-container">
+                <h4>Registered Members</h4>
+                <DataTable v-if="events" :value="transformedEvents" :paginator="true" :rows="5" :filterDelay="200">
+                    <Column field="student_id" header="Student Id" />
+                    <Column field="attendance" header="Attendance" />
+                </DataTable>
+                <p v-else>No registered events found.</p>
+                </div>
             </div>
         </div>
-        <div v-if="isStudent">
+        <div v-else-if="isStudent">
             <div class="button-container">
-                <a :href="'/eventregister/' + event._id" class="btn btn-primary" @click.stop>Register</a>
+                <div v-if="new Date(event.eventDateFrom) > new Date()">
+                    <a :href="'/eventregister/' + event._id" class="btn btn-primary" @click.stop>Register</a>
+                </div>
+            </div>
+        </div>
+        <div v-else>
+            <div class="button-container">
+                <div v-if="new Date(event.eventDateFrom) > new Date()">
+                    <a :href="'/signup'" class="btn btn-primary" @click.stop>Register</a>
+                </div>
             </div>
         </div>
     </div>
@@ -98,6 +147,13 @@ onMounted(() => {
     height: auto;
 }
 
+.data-table-container {
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 15px;
+    margin-top: 20px;
+    background-color: #f9f9f9;
+}
 .back-link {
     display: inline-block;
     margin-top: 20px;

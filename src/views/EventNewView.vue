@@ -1,6 +1,6 @@
 <script setup>
 import Header from '@/components/Header.vue'
-import { onMounted, ref } from "vue";
+import { onMounted, ref, computed } from "vue";
 import { jwtDecode } from "jwt-decode";
 import '@/assets/css/event.css'
 
@@ -8,6 +8,14 @@ import '@/assets/css/event.css'
 
 let isAdmin = ref(false);
 let isStudent = ref(false);
+
+
+
+// Get today's date in YYYY-MM-DD format
+const today = new Date();
+const minDate = computed(() => {
+    return today.toISOString().split('T')[0]; // Format to YYYY-MM-DD
+});
 
 
 const checkrole = async () => {
@@ -23,6 +31,7 @@ const checkrole = async () => {
     }
 }
 
+
 onMounted(() => {
     checkrole();
 });
@@ -32,6 +41,8 @@ onMounted(() => {
 <template>
     <main>
         <Header />
+        <div style="height: 80px;"></div>
+
         <div v-if="isAdmin">
             <div class="container">
                 <div class="form-container" style="max-height: 80vh; overflow-y: auto;">
@@ -50,12 +61,12 @@ onMounted(() => {
                             <div class="form-group">
 
                                 <label for="event-date">Event Date:(From)</label>
-                                <input type="date" id="event-date-from" v-model="eventDateFrom"
+                                <input type="date" id="event-date-from" :min="minDate" v-model="eventDateFrom"
                                     placeholder="Enter event date">
                             </div>
                             <div class="form-group">
                                 <label for="event-date">Event Date:(To)</label>
-                                <input type="date" id="event-date-to" v-model="eventDateTo"
+                                <input type="date" id="event-date-to" :min="eventDateFrom" v-model="eventDateTo"
                                     placeholder="Enter event date">
                             </div>
                         </div>
@@ -63,17 +74,17 @@ onMounted(() => {
                         <div class="grid2x1">
                             <div class="form-group">
                                 <label for="event-time">Event Time:(Start)</label>
-                                <input type="time" id="event-time-start" v-model="eventTimeStart"
+                                <input type="time" id="event-time-start"  v-model="eventTimeStart"
                                     placeholder="Enter event time">
                             </div>
                             <div class="form-group">
                                 <label for="event-time">Event Time:(End)</label>
-                                <input type="time" id="event-time-end" v-model="eventTimeEnd"
+                                <input type="time" id="event-time-end" :min="eventTimeStart" v-model="eventTimeEnd"
                                     placeholder="Enter event time">
                             </div>
                         </div>
                         <div class="form-group">
-                            <label for="event-name">Venue:</label>
+                            <label for="event-venue">Venue:</label>
                             <input type="text" id="venue" v-model="eventVenue" placeholder="Enter event venue">
                         </div>
 
@@ -110,13 +121,7 @@ onMounted(() => {
                                 <option v-for="num in 19" :key="num + 1" :value="num + 1">{{ num + 1 }}</option>
                             </select>
                         </div>
-                        <div class="form-group" v-if="sectionNumber >= 2">
-                            <template v-for="index in sectionNumber">
-                                <label :for="'section' + index">Section {{ index }}</label>
-                                <input type="time" :id="'section' + index" v-model="sections[index - 1]"
-                                    placeholder="Enter event time">
-                            </template>
-                        </div>
+                        
 
                         <button type="submit">Create Event</button>
                     </form>
@@ -145,24 +150,43 @@ export default {
             eventVenue: '',
             multipleSection: 'no',
             sectionNumber: '0', // Default value
-            sections: Array(20).fill(''), // Initialize for 20 sections
         }
     },
-    watch: {
-        sectionNumber(newVal) {
-            // Ensure the sections array is updated based on the selected section number
-            if (newVal > this.sections.length) {
-                this.sections.push(...Array(newVal - this.sections.length).fill(''));
-            } else {
-                this.sections = this.sections.slice(0, newVal);
-            }
-        }
-    },
+    
     methods: {
         handleFileChange(event) {
             this.eventPoster = event.target.files[0];
         },
         handleSubmit() {
+            const dateFrom = new Date(this.eventDateFrom);
+    const dateTo = new Date(this.eventDateTo);
+    const timeStart = this.eventTimeStart.split(':');
+    const timeEnd = this.eventTimeEnd.split(':');
+
+    const startTime = new Date(dateFrom);
+    startTime.setHours(timeStart[0], timeStart[1]);
+
+    const endTime = new Date(dateTo);
+    endTime.setHours(timeEnd[0], timeEnd[1]);
+
+    // Check if the "To" date is earlier than the "From" date
+    if (dateTo < dateFrom) {
+        alert('The "To" date cannot be earlier than the "From" date.');
+        return;
+    }
+
+    // Check if the end time is earlier than the start time only if the dates are the same
+    if (dateFrom.getTime() === dateTo.getTime() && endTime < startTime) {
+        alert('The end time cannot be earlier than the start time on the same day.');
+        return;
+    }
+
+    // Check if the event is in the past
+    const now = new Date();
+    if (startTime < now) {
+        alert('The event must be scheduled for the future.');
+        return;
+    }
             const formData = new FormData();
             formData.append('eventName', this.eventName);
             formData.append('eventDateFrom', this.eventDateFrom);
@@ -176,7 +200,6 @@ export default {
             formData.append('multipleSection', this.multipleSection);
             formData.append('sectionNumber', this.multipleSection === 'yes' ? this.sectionNumber : 0);
             formData.append('eventPoster', this.eventPoster);
-            formData.append('sections', JSON.stringify(this.sections));
 
 
             axios.post('/api/eventnew', formData, {

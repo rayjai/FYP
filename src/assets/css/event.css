@@ -104,9 +104,10 @@
 }
 .button-container {
   margin-top: 10px; /* Adjust as needed */
+  display: flex;
 }
 .button-container a{
-  margin-right: 10px; /* Adjust as needed */
+  margin-right: 5px; /* Adjust as needed */
 }
 .event-middle{
   display: flex;
@@ -124,4 +125,15 @@
   width: 100px;
   display: grid;
   grid-template-columns: 20% 80%;
+}
+.registered {
+
+  cursor: not-allowed; /* Change cursor to indicate it's not clickable */
+}
+.current-poster {
+  max-width: 100%;
+  height: auto;
+  margin-top: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
 }

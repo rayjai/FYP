@@ -11,7 +11,9 @@ let registrationData = ref({
     student_id: '',
     email: '',
     password: '',
-    gender: ''
+    gender: '',
+    role:'student',
+    icon:''
 });
 
 let errorMessage = ref(''); 

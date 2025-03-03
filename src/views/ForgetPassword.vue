@@ -51,10 +51,10 @@ const login = async () => {
                 <div class="return-btn">
                     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
                     </link>
-                    <a href="/home"><i class='bx bx-arrow-back'></i></a>
+                    <a href="/signin"><i class='bx bx-arrow-back'></i></a>
                 </div>
 
-                <h1>Sign In</h1>
+                <h1>Forget Password</h1>
 
                 <div class="typebox">
                     <input type="email" placeholder="abc@life.hkbu.edu.hk" v-model="credentials.email">
@@ -62,18 +62,10 @@ const login = async () => {
                     </link>
                     <i class='bx bx-envelope'></i>
                 </div>
-                <div class="typebox">
-                    <input type="password" placeholder="Password" v-model="credentials.password">
-                    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-                    </link>
-                    <i class='bx bxs-lock-alt'></i>
-                </div>
-                <div class="register-link"><p>If you forgot your password, please click  <a href="/forget">here</a>.</p></div>
+             
                 
-                <button type="submit" class="btn btn-primary">Sign in</button>
-                <div class="register-link">
-                    <p>Don't have an account? <a href="/signup">Register here</a></p>
-                </div>
+                <button type="submit" class="btn btn-primary">Send reset email</button>
+                
 
             </div>
         </form>

@@ -1,5 +1,7 @@
 <template>
     <Header />
+    <div style="height: 80px;"></div>
+
     <div class="profile-container">
       <div class="profile-header">
         <img :src="user.avatar" alt="User Avatar" class="avatar" />
@@ -33,11 +35,14 @@
         <button @click="isEditing = false">Cancel</button>
       </div>
     </div>
+    <Footer/>
   </template>
   
   <script setup>
   import { ref } from 'vue';
   import Header from '@/components/Header.vue';
+  import Footer from '@/components/Footer.vue'
+
   
   const user = ref({
     username: 'john_doe',

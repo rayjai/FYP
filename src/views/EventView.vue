@@ -1,13 +1,16 @@
 <script setup>
 import Header from '@/components/Header.vue'
+import Spinner from '@/components/Spinner.vue'
 import { onMounted, ref, computed } from "vue";
 import { jwtDecode } from "jwt-decode";
 import '@/assets/css/event.css'
-
+import axios from 'axios';
 
 
 let isAdmin = ref(false);
 let isStudent = ref(false);
+const student_id = ref(""); // Store the student ID
+const registeredEvents = ref(new Set());
 
 
 const checkrole = async () => {
@@ -19,6 +22,8 @@ const checkrole = async () => {
         }
         if (decoded.user.role === 'student') {
             isStudent.value = true;
+            student_id.value = decoded.user.student_id; // Assuming the student ID is in the token
+            await fetchRegisteredEvents();
         }
     }
 }
@@ -27,18 +32,55 @@ const events = ref([]);
 const currentPage = ref();
 const totalPages = ref();
 const perPage = ref(6);
+let isLoading = ref(false);
 
 async function fetchEvents(page) {
+    isLoading.value = true; // Set loading to true
     try {
         currentPage.value = page;
         const response = await fetch(`/api/events?page=${page}&perPage=${perPage.value}`);
         const data = await response.json();
         events.value = data.events;
-        totalPages.value = data.totalPages; // Assuming you send this from the backend
-        console.log('Events:', events.value);
+        totalPages.value = data.totalPages;
     } catch (error) {
         console.error('Error fetching events:', error);
+    } finally {
+        isLoading.value = false; // Set loading to false
     }
+}
+
+// Fetch registered events for the student
+async function fetchRegisteredEvents() {
+    try {
+        const response = await fetch(`/api/registrations/` + student_id.value);
+        const registrationData = await response.json();
+
+
+
+        // Check if the response data is an array
+        if (Array.isArray(registrationData)) {
+            if (registrationData.length === 0) {
+                console.warn('No registrations found for this student.');
+            } else {
+                // Iterate over the array and add event IDs to registeredEvents
+                registrationData.forEach(event => {
+                    if (event.event_id) { // Check if event_id exists
+                        registeredEvents.value.add(event.event_id);
+                        console.log(registeredEvents);
+                    } else {
+                        console.error('Event does not have an event_id:', event);
+                    }
+                });
+            }
+        } else {
+            console.error('Unexpected response format: Expected an array but got:', registrationData);
+        }
+    } catch (error) {
+        console.error('Error fetching registered events:', error);
+    }
+}
+const isEventRegistered = (id) => {
+    return registeredEvents.value.has(id);
 };
 
 const pages = computed(() => {
@@ -55,11 +97,23 @@ onMounted(() => {
     fetchEvents(1);
 });
 
+const searchQuery = ref(""); // Reactive variable for search input
+const filteredEvents = computed(() => {
+    if (!searchQuery.value) {
+        return events.value; // Return all events if no search query
+    }
+    return events.value.filter(event =>
+        event.eventName.toLowerCase().includes(searchQuery.value.toLowerCase())
+    );
+});
+
 </script>
 
 <template>
     <main>
         <Header />
+        <div style="height: 80px;"></div>
+
         <div v-if="isAdmin">
             <div class="contain">
                 <nav aria-label="breadcrumb">
@@ -70,46 +124,66 @@ onMounted(() => {
                 </nav>
                 <div class="d-flex justify-content-between align-items-center">
                     <div class="d-flex">
-                        <form class="d-flex me-2">
-                            <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-                            <button class="btn btn-outline-success" type="submit">Search</button>
+                        <form class="d-flex me-2" @submit.prevent>
+                            <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search"
+                                v-model="searchQuery" />
                         </form>
-                        <button class="btn btn-outline-info" type="button" @click="filterEvents">Filter</button>
                     </div>
                     <a href="/eventnew" class="btn btn-primary">New Event</a>
                 </div>
-            </div>
 
-            <div class="grid-3x2">
-                <router-link v-for="event in events" :key="event._id" :to="{ path: `/event/detail/${event._id}` }"
-                    class="card-link">
-                    <div class="card" style="width: 18rem;">
-                        <img :src="'http://localhost:3000/uploads/' + event.eventPoster" class="card-img-top" alt="...">
-                        <div class="card-body">
-                            <h5 class="card-title">{{ event.eventName }}</h5>
-                            <p class="card-text">{{ event.eventDescription }}</p>
-                            <div class="button-container">
-                            <a :href="'/event/edit/' + event._id" class="btn btn-primary" @click.stop>
-                                Edit
-                            </a>
-                            <a :href="'/eventregister/' + event._id" class="btn btn-primary" @click.stop>Register</a>
-                            </div>  
-                        </div>
-                    </div>
-                </router-link>
             </div>
-            <div class="container-fluid">
-                <nav aria-label="Page navigation">
-                    <ul class="pagination justify-content-center">
-                        <li class="page-item" aria-current="page" :class="{ active: index == currentPage }"
-                            v-for="index in pages" :key="index">
-                            <a class="page-link" @click="fetchEvents(index)"> {{ index }}</a>
-                        </li>
-                    </ul>
-                </nav>
+            <div v-if="isLoading">
+                <Spinner />
+            </div>
+            <div v-else>
+
+                <div class="grid-3x2">
+                    <router-link v-for="event in filteredEvents" :key="event._id"
+                        :to="{ path: `/event/detail/${event._id}` }" class="card-link">
+                        <div class="card" style="width: 18rem;">
+                            <img :src="'http://localhost:3000/uploads/' + event.eventPoster" class="card-img-top"
+                                alt="...">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ event.eventName }}</h5>
+                                <p class="card-text">Date: <span v-if="event.eventDateFrom === event.eventDateTo">
+                                        {{ event.eventDateFrom }}
+                                    </span>
+                                    <span v-else>
+                                        {{ event.eventDateFrom }} - {{ event.eventDateTo }}
+                                    </span>
+                                </p>
+                                <div class="button-container">
+                                    <a :href="'/event/edit/' + event._id" class="btn btn-primary" @click.stop>
+                                        Edit
+                                    </a>
+                                    <a :href="'/qrcodescan/' + event._id" class="btn btn-primary" @click.stop>
+                                        Attendance
+                                    </a>
+                                    <div v-if="new Date(event.eventDateFrom) > new Date()">
+                                        <a :href="'/eventregister/' + event._id" class="btn btn-primary" @click.stop>
+                                            Register
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </router-link>
+                </div>
+
+                <div class="container-fluid">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item" aria-current="page" :class="{ active: index == currentPage }"
+                                v-for="index in pages" :key="index">
+                                <a class="page-link" @click="fetchEvents(index)"> {{ index }}</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
             </div>
         </div>
-        <div v-if="isStudent">
+        <div v-else-if="isStudent">
             <div class="contain">
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb">
@@ -119,38 +193,59 @@ onMounted(() => {
                 </nav>
                 <div class="d-flex justify-content-between align-items-center">
                     <div class="d-flex">
-                        <form class="d-flex me-2">
-                            <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-                            <button class="btn btn-outline-success" type="submit">Search</button>
+                        <form class="d-flex me-2" @submit.prevent>
+                            <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search"
+                                v-model="searchQuery" />
                         </form>
-                        <button class="btn btn-outline-info" type="button" @click="filterEvents">Filter</button>
                     </div>
                 </div>
             </div>
-
-            <div class="grid-3x2">
-                <router-link v-for="event in events" :key="event._id" :to="{ path: `/event/detail/${event._id}` }" class="card-link">
-                    <div class="card" style="width: 18rem;">
-                        <img :src="'http://localhost:3000/uploads/' + event.eventPoster" class="card-img-top" alt="...">
-                        <div class="card-body">
-                            <h5 class="card-title">{{ event.eventName }}</h5>
-                            <p class="card-text">{{ event.eventDescription }}</p>
-                            <div class="button-container">
-                            <a :href="'/eventregister/' + event._id" class="btn btn-primary" @click.stop>Register</a>
-                            </div>  
-                        </div>
-                    </div>
-                </router-link>
+            <div v-if="isLoading">
+                <Spinner />
             </div>
-            <div class="container-fluid">
-                <nav aria-label="Page navigation">
-                    <ul class="pagination justify-content-center">
-                        <li class="page-item" aria-current="page" :class="{ active: index == currentPage }"
-                            v-for="index in pages" :key="index">
-                            <a class="page-link" @click="fetchEvents(index)"> {{ index }}</a>
-                        </li>
-                    </ul>
-                </nav>
+            <div v-else>
+                <div class="grid-3x2">
+                    <router-link v-for="event in filteredEvents" :key="event._id"
+                        :to="{ path: `/event/detail/${event._id}` }" class="card-link">
+                        <div class="card" style="width: 18rem;">
+                            <img :src="'http://localhost:3000/uploads/' + event.eventPoster" class="card-img-top"
+                                alt="...">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ event.eventName }}</h5>
+                                <p class="card-text">Date: <span v-if="event.eventDateFrom === event.eventDateTo">
+                                        {{ event.eventDateFrom }}
+                                    </span>
+                                    <span v-else>
+                                        {{ event.eventDateFrom }} - {{ event.eventDateTo }}
+                                    </span>
+                                </p>
+                                <div class="button-container">
+                                    <div v-if="isEventRegistered(event._id)">
+                                        <span class="registered">Already Registered</span>
+                                    </div>
+                                    <div v-else>
+                                        <div v-if="new Date(event.eventDateFrom) > new Date()">
+                                            <a :href="'/eventregister/' + event._id" class="btn btn-primary"
+                                                @click.stop>
+                                                Register
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </router-link>
+                </div>
+                <div class="container-fluid">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item" aria-current="page" :class="{ active: index == currentPage }"
+                                v-for="index in pages" :key="index">
+                                <a class="page-link" @click="fetchEvents(index)"> {{ index }}</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
             </div>
         </div>
         <div v-else>
@@ -163,39 +258,55 @@ onMounted(() => {
                 </nav>
                 <div class="d-flex justify-content-between align-items-center">
                     <div class="d-flex">
-                        <form class="d-flex me-2">
-                            <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-                            <button class="btn btn-outline-success" type="submit">Search</button>
+                        <form class="d-flex me-2" @submit.prevent>
+                            <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search"
+                                v-model="searchQuery" />
                         </form>
-                        <button class="btn btn-outline-info" type="button" @click="filterEvents">Filter</button>
                     </div>
                 </div>
             </div>
-
-            <div class="grid-3x2">
-                <router-link v-for="event in events" :key="event._id" :to="{ path: `/event/detail/${event._id}` }" class="card-link">
-                    <div class="card" style="width: 18rem;">
-                        <img :src="'http://localhost:3000/uploads/' + event.eventPoster" class="card-img-top" alt="...">
-                        <div class="card-body">
-                            <h5 class="card-title">{{ event.eventName }}</h5>
-                            <p class="card-text">{{ event.eventDescription }}</p>
-                            <div class="button-container">
-                            <a :href="'/signin'" class="btn btn-primary" @click.stop>Register</a>
-                            </div>  
+            <div v-if="isLoading">
+                <Spinner />
+            </div>
+            <div v-else>
+                <div class="grid-3x2">
+                    <router-link v-for="event in filteredEvents" :key="event._id"
+                        :to="{ path: `/event/detail/${event._id}` }" class="card-link">
+                        <div class="card" style="width: 18rem;">
+                            <img :src="'http://localhost:3000/uploads/' + event.eventPoster" class="card-img-top"
+                                alt="...">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ event.eventName }}</h5>
+                                <p class="card-text">Date: <span v-if="event.eventDateFrom === event.eventDateTo">
+                                        {{ event.eventDateFrom }}
+                                    </span>
+                                    <span v-else>
+                                        {{ event.eventDateFrom }} - {{ event.eventDateTo }}
+                                    </span>
+                                </p>
+                                <div class="button-container">
+                                    <div v-if="new Date(event.eventDateFrom) > new Date()">
+                                        <a :href="'/signin'" class="btn btn-primary" @click.stop>Register</a>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </router-link>
+                    </router-link>
+                </div>
+                <div class="container-fluid">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item" aria-current="page" :class="{ active: index == currentPage }"
+                                v-for="index in pages" :key="index">
+                                <a class="page-link" @click="fetchEvents(index)"> {{ index }}</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
             </div>
-            <div class="container-fluid">
-                <nav aria-label="Page navigation">
-                    <ul class="pagination justify-content-center">
-                        <li class="page-item" aria-current="page" :class="{ active: index == currentPage }"
-                            v-for="index in pages" :key="index">
-                            <a class="page-link" @click="fetchEvents(index)"> {{ index }}</a>
-                        </li>
-                    </ul>
-                </nav>
-            </div>
+
         </div>
+
+
     </main>
 </template>

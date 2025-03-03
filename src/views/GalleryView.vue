@@ -1,5 +1,7 @@
 <script setup>
 import Header from '@/components/Header.vue'
+import Footer from '@/components/Footer.vue'
+
 import { onMounted, ref } from "vue";
 import { jwtDecode } from "jwt-decode";
 import '@/assets/css/home.css';
@@ -29,6 +31,8 @@ onMounted(() => {
 </script>
 <template>
     <Header />
+    <div style="height: 80px;"></div>
+
     <div class="aboutbg">
         <img src="/src/assets/student_club_group_photo.png" class="card-img-top">
         <h1 class="overlay-title">Gallery</h1>
@@ -70,5 +74,5 @@ onMounted(() => {
             </div>
         </div>
     </div>
-
+    <Footer />
 </template>

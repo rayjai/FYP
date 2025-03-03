@@ -15,6 +15,11 @@ const router = createRouter({
       component: HomeView
     },
     {
+      path: '/createclub',
+      name: 'createclub',
+      component: () => import('../views/CreateClub.vue')
+    },
+    {
       path: '/event',
       name: 'event',
       component: () => import('../views/EventView.vue')
@@ -96,6 +101,51 @@ const router = createRouter({
       path: '/event/edit/:id',
       name: 'eventedit',
       component: () => import('../views/EventEditView.vue'),
+    },
+    {
+      path: '/membershipcard',
+      name: 'membershipcard',
+      component: () => import('../views/MemberShipCard.vue'),
+    },
+    {
+      path: '/qrcodescan/:id',
+      name: 'qrcodescan',
+      component: () => import('../views/QRcodeScan.vue'),
+    },
+    {
+      path: '/studenteventrecord',
+      name: 'studenteventrecord',
+      component: () => import('../views/StudentEventRecord.vue'),
+    },
+    {
+      path: '/forget',
+      name: 'forget',
+      component: () => import('../views/ForgetPassword.vue'),
+    },
+    {
+      path: '/createpost/:id',
+      name: 'createpost',
+      component: () => import('../views/CreatePost.vue'),
+    },
+    {
+      path: '/postdetail/:id',
+      name: 'postdetail',
+      component: () => import('../views/PostDetail.vue'),
+    },
+    {
+      path: '/editpost/:id',
+      name: 'editpost',
+      component: () => import('../views/EditPost.vue'),
+    },
+    {
+      path: '/incomerecord/:id',
+      name: 'IncomeRecordDetail',
+      component: () => import('../views/IncomeRecordDetail.vue'),
+    },
+    {
+      path: '/expenditurerecord/:id',
+      name: 'ExpenditureRecordDetail',
+      component: () => import('../views/ExpenditureRecordDetail.vue'),
     },
   ]
 });

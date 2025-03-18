@@ -1,6 +1,10 @@
 <template>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     </link>
+    <div v-if="isLoading" class="loading-animation">
+           <Spinner />
+        </div>
+        <div v-else>
     <div class="navigation">
         <ul style="padding-left: 0px;">
             <li v-for="(item, index) in menuItems" :key="index" @mouseover="setHovered(index)"
@@ -14,6 +18,8 @@
             </li>
         </ul>
     </div>
+    
+
     <div v-if="isDashboard">
         <div class="main" :class="{ active: isActive }">
             <div class="topbar">
@@ -21,11 +27,7 @@
                     <i class='bx bx-menu'></i>
                 </div>
 
-                <div class="search">
-                    <label>
-                        <input type="text" placeholder="Search here">
-                    </label>
-                </div>
+            
 
                 <div class="user">
                     <img src="/src/assets/student_club1.png" alt="">
@@ -46,36 +48,11 @@
                 </div>
             </div>
 
-            <!-- ================ Order Details List ================= -->
-            <div class="details">
-                <div class="recentOrders">
-                    <div class="cardHeader">
-                        <h2>Recent Orders</h2>
-                        <a href="#" class="btn">View All</a>
-                    </div>
-
-                    <table>
-                        <thead>
-                            <tr>
-                                <td>Name</td>
-                                <td>Price</td>
-                                <td>Payment</td>
-                                <td>Status</td>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="(order, index) in orders" :key="index">
-                                <td>{{ order.name }}</td>
-                                <td>{{ order.price }}</td>
-                                <td>{{ order.payment }}</td>
-                                <td><span :class="['status', order.status]">{{ order.statusText }}</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+            <div class="holder">
+  
 
                 <!-- ================= New Customers ================ -->
-                <div class="recentCustomers">
+                <div class="calendar">
                     <FullCalendar :options="calendarOptions" />
                 </div>
             </div>
@@ -88,12 +65,7 @@
                     <i class='bx bx-menu'></i>
                 </div>
 
-                <div class="search">
-                    <label>
-                        <input type="text" placeholder="Search here">
-                        <ion-icon name="search-outline"></ion-icon>
-                    </label>
-                </div>
+       
 
                 <div class="user">
                     <img src="/src/assets/student_club1.png" alt="">
@@ -101,18 +73,7 @@
             </div>
 
             <!-- ======================= Cards ================== -->
-            <div class="cardBox">
-                <div class="card" v-for="(card, index) in cards" :key="index">
-                    <div>
-                        <div class="numbers">{{ card.number }}</div>
-                        <div class="cardName">{{ card.name }}</div>
-                    </div>
-
-                    <div class="iconBx">
-                        <ion-icon :name="card.icon"></ion-icon>
-                    </div>
-                </div>
-            </div>
+ 
 
             <!-- ================ Expenditure Modal ================= -->
 
@@ -129,6 +90,12 @@
             <div class="form-group">
                 <label for="Date">Date *</label>
                 <input type="date" id="Date" required v-model="expenditureDate">
+            </div>
+            <div class="form-group">
+                <label for="category">Select Category *</label>
+                <select id="category" v-model="selectedExpenditureCategory" required>
+                    <option v-for="category in categories" :key="category._id" :value="category.category">{{ category.category }}</option>
+                </select>
             </div>
             <div class="form-group">
     <label for="pic">Person In Charge</label>
@@ -225,6 +192,12 @@
                 <input type="date" id="Date" required v-model="incomeDate">
             </div>
             <div class="form-group">
+                <label for="category">Select Category *</label>
+                <select id="category" v-model="selectedIncomeCategory">
+                    <option v-for="category in categories" :key="category._id" :value="category.category">{{ category.category }}</option>
+                </select>
+            </div>
+            <div class="form-group">
     <label for="pic">Person In Charge</label>
     <select id="pic" v-model="selectedAdmin">
                         <option v-for="admin in admins" :key="admin._id" :value="admin.english_name">{{ admin.english_name }}</option>
@@ -319,19 +292,68 @@
 </div>
             <!-- ================ Order Details List ================= -->
             <div class="holder">
-
+                <h2>Transactions</h2>
     <!-- Add buttons positioned at the top right corner -->
     <div class="action-buttons" style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
-        <button class="btn btn-expenditure" @click="openExpenditureModal">
-            <i class='bx bx-dollar'></i> New Expenditure
-        </button>
-        <button class="btn btn-receivable" @click="openIncomeModal" style="margin-left: 10px;">
-            <i class='bx bx-receipt'></i> New Income
+        <button class="btn btn-expenditure" @click="openFinancialReportModal">
+            <i class='bx bx-dollar'></i> Generate Financial Report
         </button>
     </div>
-    <h2>Transactions</h2>
+    
+    <div v-if="IncomeRecord">
+        <div>
+    <label for="month">Month:</label>
+    <select id="filterincomemonth">
+        <option value="1">January</option>
+        <option value="2">February</option>
+        <option value="3">March</option>
+        <option value="4">April</option>
+        <option value="5">May</option>
+        <option value="6">June</option>
+        <option value="7">July</option>
+        <option value="8">August</option>
+        <option value="9">September</option>
+        <option value="10">October</option>
+        <option value="11">November</option>
+        <option value="12">December</option>
+    </select>
 
+    <label for="year" style="margin-left: 20px;">Year:</label>
+    <input type="number" id="filterincomeyear" value="2025" min="2000" max="2100">
 
+    <button @click="fetchIncomeRecordsByDate" style="margin-left: 20px;">Apply Filter</button>
+</div>
+<div class="chart-container">    
+    <canvas id="incomeChart" style="height: 400px; width: 100%;"></canvas>
+    </div>
+    </div>
+    <div v-if="ExpenditureRecord">
+        <div>
+    <label for="month">Month:</label>
+    <select id="filterexpendituremonth">
+        <option value="1">January</option>
+        <option value="2">February</option>
+        <option value="3">March</option>
+        <option value="4">April</option>
+        <option value="5">May</option>
+        <option value="6">June</option>
+        <option value="7">July</option>
+        <option value="8">August</option>
+        <option value="9">September</option>
+        <option value="10">October</option>
+        <option value="11">November</option>
+        <option value="12">December</option>
+    </select>
+
+    <label for="year" style="margin-left: 20px;">Year:</label>
+    <input type="number" id="filterexpenditureyear" value="2025" min="2000" max="2100">
+
+    <button @click="fetchExpenditureRecordsByDate" style="margin-left: 20px;">Apply Filter</button>
+</div>
+<div class="chart-container">    
+    <canvas id="expenditureChart" style="height: 400px; width: 100%;"></canvas>
+    </div>
+    </div>
    <!-- Grouped Income and Expenditure Record Buttons -->
 <div class="record-buttons" style="display: flex; justify-content: center; margin-bottom: 20px;">
     <button class="btn record-btn btn-expenditure" @click="openExpenditureRecord">
@@ -362,7 +384,7 @@
         <ag-grid-vue
             class="ag-theme-alpine"
             style="width: 100%; height: 500px;"
-            :columnDefs="columnDefs"
+            :columnDefs="expenditureColumnDefs"
             :rowData="filteredExpenditureRecords"
             :pagination="true"
             :paginationPageSize="10"
@@ -375,6 +397,50 @@
 
         
         </div>
+
+        <div id="app">
+    <div class="fab-container">
+        <div v-if="menuVisible" class="fab-menu">
+            <button class="fab-option" @click="openExpenditureModal">
+            <i class='bx bx-dollar'></i> New Expenditure
+        </button>
+            <button class="fab-option" @click="openIncomeModal">
+            <i class='bx bx-receipt'></i> New Income
+        </button>
+        </div>
+        <button class="fab" @click="toggleplusMenu">+</button>
+        
+    </div>
+</div>
+<div id="FinancialReportModal" class="modal">
+    <div class="modal-content">
+        <span class="close" @click="closeFinancialReportModal">&times;</span>
+        <h2>Generate Report</h2>
+        
+        <form id="FinancialReportForm" @submit.prevent="saveFinancialReport">
+          <div class="form-group">
+            <label for="DateFrom">Date From *</label>
+            <input type="date" id="DateFrom" required v-model="ReportDateFrom">
+          </div>
+          <div class="form-group">
+            <label for="DateTo">Date To *</label>
+            <input type="date" id="DateTo" required v-model="ReportDateTo">
+          </div>
+          <div class="form-group">
+    <label for="category">Select Category:</label>
+    <select id="category" v-model="selectedCategory">
+        <option value="">All Categories</option>
+        <option v-for="category in categories" :key="category._id" :value="category.category">
+            {{ category.category }}
+        </option>
+    </select>
+</div>
+
+          <button type="submit">Generate Report</button>
+        </form>
+    </div>
+</div>
+
     </div>
 
     <div v-if="isMember">
@@ -384,23 +450,25 @@
                     <i class='bx bx-menu'></i>
                 </div>
 
-                <div class="search">
-                    <label>
-                        <input type="text" placeholder="Search here">
-                        <ion-icon name="search-outline"></ion-icon>
-                    </label>
-                </div>
+
 
                 <div class="user">
                     <img src="/src/assets/student_club1.png" alt="">
                 </div>
             </div>
-            <h2>Members</h2>
-            <div class="details">
-                <DataTable :value="membersData" :paginator="true" :rows="10">
-                    <Column field="english_name" header="Name" />
-                    <Column field="student_id" header="Student ID" />
-                </DataTable>
+            
+            <div class="holder">
+                <h2>Members</h2>
+                <ag-grid-vue
+            class="ag-theme-alpine"
+            style="width: 100%; height: 500px;"
+            :columnDefs="memberColumnDefs"
+            :rowData="membersData"
+            :pagination="true"
+            :paginationPageSize="10"
+            :defaultColDef="defaultColDef"
+            @rowClicked="onRowClickedMember">
+        </ag-grid-vue>
             </div>
         </div>
     </div>
@@ -418,17 +486,99 @@
                     <img src="/src/assets/student_club1.png" alt="">
                 </div>
             </div>
-            <div class="setting-container">
-                <h2>Settings</h2>
-                <div class="settings-menu">
-                    <button @click="currentSetting = 'profile'">Profile</button>
-                    <button @click="currentSetting = 'notification'">Notifications</button>
-                    <button @click="currentSetting = 'privacy'">Privacy</button>
-                </div>
+            <div class="holder">
+                <h2>Inventory</h2>
+                <div class="action-buttons" style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+        <button class="btn btn-expenditure" @click="openInventoryModal">
+            <i class='bx bx-book-content'></i> Add Inventory Item
+        </button>
+    </div>
+    <div id="InventoryModal" class="modal">
+    <div class="modal-content">
+        <span class="close" @click="closeInventoryModal">&times;</span>
+        <h2>Add Inventory Item</h2>
+        
+        <form id="InventoryForm" @submit.prevent="saveInventory">
+            <div class="form-group">
+        <label for="item-name">Item Name:</label>
+        <input type="text" id="item-name" name="item-name" required v-model="inventory_itemName">
+    </div>
 
-                <div class="settings-content">
-                    <component :is="currentSettingComponent"></component>
-                </div>
+    <div class="form-group">
+        <label for="description">Description:</label>
+        <textarea id="description" name="description" rows="4" v-model="inventory_description"></textarea>
+    </div>
+    <div class="form-group">
+        <label for="category">Select Category:</label>
+        <select id="category" v-model="inventory_selectedCategory">
+            <option value="">All Categories</option>
+            <option v-for="category in inventory_categories" :key="category._id" :value="category.category">
+                {{ category.category }}
+            </option>
+        </select>
+    </div>
+
+    <!-- New fields added below -->
+  
+
+
+    <div class="form-group">
+        <label for="quantity">Quantity:</label>
+        <input type="number" id="quantity" name="quantity" min="0" required v-model="inventory_quantity">
+    </div>
+
+    <div class="form-group">
+        <label for="purchase-date">Purchase Date:</label>
+        <input type="date" id="purchase-date" name="purchase-date" v-model="inventory_purchaseDate">
+    </div>
+
+    <div class="form-group">
+        <label for="purchase-price">Purchase Price:</label>
+        <input type="number" id="purchase-price" name="purchase-price" step="0.01" required v-model="inventory_purchasePrice">
+    </div>
+
+    <div class="form-group">
+        <label for="current-value">Current Value:</label>
+        <input type="number" id="current-value" name="current-value" step="0.01" required v-model="inventory_currentValue">
+    </div>
+
+    <div class="form-group">
+        <label for="location">Location:</label>
+        <input type="text" id="location" name="location" required v-model="inventory_location">
+    </div>
+
+    <div class="form-group">
+        <label for="condition">Condition:</label>
+        <select id="condition" name="condition" required v-model="inventory_condition">
+            <option value="">Select Condition</option>
+            <option value="new">New</option>
+            <option value="good">Good</option>
+            <option value="needs repair">Needs Repair</option>
+        </select>
+    </div>
+
+
+
+    <div class="form-group">
+        <label for="notes">Remarks:</label>
+        <textarea id="notes" name="notes" rows="3" v-model="inventory_remarks"></textarea>
+    </div>
+
+    <button type="submit">Add Inventory</button>
+</form>
+
+    </div>
+</div>
+                <ag-grid-vue
+            class="ag-theme-alpine"
+            style="width: 100%; height: 500px;"
+            :columnDefs="memberColumnDefs"
+            :rowData="membersData"
+            :pagination="true"
+            :paginationPageSize="10"
+            :defaultColDef="defaultColDef"
+            @rowClicked="onRowClickedMember">
+        </ag-grid-vue>
             </div>
         </div>
     </div>
@@ -450,6 +600,8 @@
                 <div class="settings-menu">
                     <button @click="ContentSetting = 'home'">Home</button>
                     <button @click="ContentSetting = 'about'">About Us</button>
+                    <button @click="ContentSetting = 'others'">Finance Categories</button>
+                    <button @click="ContentSetting = 'inventory_categories'">Inventory Categories</button>
                 </div>
 
                 <div class="settings-content">
@@ -457,14 +609,17 @@
                 </div>
             </div>
         </div>
+        </div>
     </div>
 </template>
 
 <script setup>
 import { onMounted, ref, computed,watch } from 'vue';
 import '@/assets/css/style.css'
+import Spinner from '@/components/Spinner.vue'
 import FullCalendar from '@fullcalendar/vue3'
-import dayGridPlugin from '@fullcalendar/daygrid'
+import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction'
 import { useRouter } from 'vue-router';  //useRoute
 import ProfileSettings from '@/views/ProfileSettings.vue';
@@ -472,10 +627,74 @@ import NotificationSettings from '@/views/NotificationSettings.vue';
 import PrivacySettings from '@/views/PrivacySettings.vue';
 import HomeSettings from '@/views/HomeSettings.vue';
 import AboutUsSettings from '@/views/AboutUsSettings.vue';
+import OthersSettings from '@/views/OthersSettings.vue';
+import InventoryCategory from '@/views/InventoryCategory.vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import axios from 'axios';
 import { AgGridVue } from "ag-grid-vue3";
+import jsPDF from 'jspdf'; 
+import html2canvas from 'html2canvas'; 
+import { nextTick } from 'vue';
+import { Chart, LinearScale, CategoryScale, LineController, PointElement, LineElement } from 'chart.js';
+import tippy from 'tippy.js';
+import 'tippy.js/dist/tippy.css'; 
+import toastr from 'toastr';
+import 'toastr/build/toastr.min.css'; 
+
+
+// Register the scales and elements
+Chart.register(LinearScale, CategoryScale, LineController, PointElement, LineElement);
+
+// Handle event click
+const handleEventClick = (info) => {
+    router.push(`/event/detail/${info.event.id}`)
+};
+const calendarOptions = ref({
+    plugins: [dayGridPlugin, timeGridPlugin],
+    initialView: 'dayGridMonth',
+    events: [],
+    eventClick: handleEventClick,
+    eventRender: function(info) {
+        // Custom rendering logic
+        const element = info.el;
+        element.style.backgroundColor = '#2196F3'; // Custom background color
+        element.style.color = 'white'; // Custom text color
+        element.style.borderRadius = '5px'; // Rounded corners
+    },
+    eventDidMount: function(info) {
+        tippy(info.el, {
+            content: info.event.title, // Tooltip content
+            placement: 'top', // Tooltip position
+        });
+    },
+});
+
+const menuVisible = ref(false);
+
+const toggleplusMenu = () => {
+    menuVisible.value = !menuVisible.value;
+};
+
+
+// Fetch events from your API
+const fetchEvents = async () => {
+    try {
+        const response = await fetch('/api/events'); // Replace with your API endpoint
+        const data = await response.json();
+        const events = data.events || []; // Get the events array
+        calendarOptions.value.events = events.map(event => ({
+            id:event._id,
+            title: event.eventName,
+            start: event.eventDateFrom, // Adjust according to your data structure
+            end: event.eventDateTo, // Optional
+        }));
+console.log('Mapped events:', calendarOptions.value.events);
+
+    } catch (error) {
+        console.error('Error fetching events:', error);
+    }
+};
 
 
 
@@ -542,8 +761,8 @@ const menuItems = ref([
     { title: 'Dashboard', icon: 'bx bx-home', action: GoDashboard },
     { title: 'Members', icon: 'bx bxs-group', action: GoMember },
     { title: 'Finance', icon: 'bx bx-dollar-circle', action: GoFinance },
-    { title: 'Settings', icon: 'bx bx-cog', action: GoSetting },
-    { title: 'Web Content', icon: 'bx bx-book-content', action: GoPassword },
+    { title: 'Inventory', icon: 'bx bx-book-content', action: GoSetting },
+    { title: 'Settings', icon: 'bx bx-cog', action: GoPassword },
 ]);
 
 const cards = ref([
@@ -551,13 +770,6 @@ const cards = ref([
     { number: memberCount, name: 'Members', icon: 'cart-outline' },
     { number: totalCommentsCount, name: 'Comments', icon: 'chatbubbles-outline' },
     { number: earnings.value.toLocaleString('en-US', { style: 'currency', currency: 'USD' }), name: 'Earnings', icon: 'cash-outline' },
-]);
-
-const orders = ref([
-    { name: 'Star Refrigerator', price: '$1200', payment: 'Paid', status: 'delivered', statusText: 'Delivered' },
-    { name: 'Dell Laptop', price: '$110', payment: 'Due', status: 'pending', statusText: 'Pending' },
-    { name: 'Apple Watch', price: '$1200', payment: 'Paid', status: 'return', statusText: 'Return' },
-    { name: 'Addidas Shoes', price: '$620', payment: 'Due', status: 'inProgress', statusText: 'In Progress' },
 ]);
 
 const customers = ref([
@@ -602,6 +814,11 @@ const ContentComponent = computed(() => {
             return HomeSettings;
         case 'about':
             return AboutUsSettings;
+        case 'others':
+            return OthersSettings;
+
+        case 'inventory_categories':
+            return InventoryCategory;
         default:
             return HomeSettings; // Fallback
     }
@@ -618,14 +835,176 @@ const ExpenditureRecord = ref(false);
 
 
 const columnDefs = [
-    { headerName: "Date", field: "date", sortable: true, filter: true },
-    { headerName: "Title", field: "title", sortable: true, filter: true },
+{
+        headerName: "Date",
+        field: "date",
+        sortable: true,
+        filter: true,
+        valueGetter: params => {
+            return formatDate(params.data.date); // Format the date here
+        }
+    },    { headerName: "Title", field: "title", sortable: true, filter: true },
     { headerName: "Total Amount", field: "totalAmount", sortable: true, filter: true },
     { headerName: "Remarks", field: "remarks", sortable: true, filter: true },
-    { headerName: "Created At", field: "createdAt", sortable: true, filter: true },
-];
+    {
+        headerName: "Receipt",
+        field: "createReceipt",
+        cellRenderer: params => {
+            // Check if createReceipt is true
+            if (params.value) {
+                return `<button class="print-button" data-id="${params.data._id}">Print</button>`;
+            } else {
+                return `<button class="print-button disabled" disabled>Unavailable</button>`;
+            }
+        },
+        sortable: false,
+        filter: false
+    },];
+
+    async function handlePrint(id) {
+    try {
+        const response = await fetch(`/api/income/detail/${id}`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch record details');
+        }
+        const data = await response.json();
+        generateReceiptPDF(data);
+    } catch (error) {
+        console.error('Error fetching record details:', error);
+        alert('Could not fetch record details for printing.');
+    }
+}
+
+function onRowClickedIncome(event) {
+    // Check if the click target is a print button
+    if (event.event.target.classList.contains('print-button')) {
+        event.event.stopPropagation(); // Prevent row click propagation
+        const id = event.event.target.getAttribute('data-id');
+        handlePrint(id); // Call the print function
+    } else {
+        const recordId = event.data._id; // Assuming your record has an '_id' field
+        router.push(`/incomerecord/${recordId}`); // Navigate to the record page
+    }
+}
+function onRowClickedMember(event) {
+    // Check if the click target is a print button
+    if (event.event.target.classList.contains('print-button')) {
+        event.event.stopPropagation(); // Prevent row click propagation
+        const id = event.event.target.getAttribute('data-id');
+        handlePrint(id); // Call the print function
+    } else {
+        const recordId = event.data._id; // Assuming your record has an '_id' field
+        console.log(event.data);
+        router.push(`/memberdetail/${recordId}`); // Navigate to the record page
+    }
+}
+
+
+// Function to generate the PDF
+const generateReceiptPDF = (data) => {
+    const receiptHtml = generateReceiptHtml(data);
+
+    // Create a temporary element to hold the HTML
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = receiptHtml;
+    document.body.appendChild(tempDiv);
+
+    // Use html2canvas to capture the HTML
+    html2canvas(tempDiv, { scale: 2 }).then(canvas => {
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF();
+        const imgWidth = 190; // Adjust based on your layout
+        const pageHeight = pdf.internal.pageSize.height;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        let heightLeft = imgHeight;
+
+        let position = 0;
+
+        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+
+        while (heightLeft >= 0) {
+            position = heightLeft - imgHeight;
+            pdf.addPage();
+            pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+        }
+
+        const fileName = `${formatDate(data.date)} - ${data.title}.pdf`;
+        pdf.save(fileName); // Save the PDF
+
+        // Clean up the temporary element
+        document.body.removeChild(tempDiv);
+    });
+};
+
+function formatDate(dateString) {
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    return new Date(dateString).toLocaleDateString(undefined, options);
+}
+
+// Function to generate receipt HTML
+const generateReceiptHtml = (data) => {
+    return `
+        <html>
+        <head>
+            <title>Receipt</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                h1 { text-align: center; }
+                table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+                th { background-color: #f2f2f2; }
+                .total { font-weight: bold; }
+            </style>
+        </head>
+        <body>
+            <h1>Receipt</h1>
+            <p><strong>Title:</strong> ${data.title}</p>
+            <p><strong>Date:</strong> ${formatDate(data.date)}</p>
+            <p><strong>Person In Charge:</strong> ${data.personInCharge}</p>
+            <p><strong>Bill To:</strong> ${data.billTo}</p>
+            <p><strong>Issue Date:</strong> ${formatDate(data.issueDate)}</p>
+            <h2>Fee Items</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fee Item</th>
+                        <th>Item Name</th>
+                        <th>Quantity</th>
+                        <th>Unit Price</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${data.feeItems.map(item => `
+                        <tr>
+                            <td>${item.feeItem}</td>
+                            <td>${item.itemName}</td>
+                            <td>${item.quantity}</td>
+                            <td>${item.unitPrice}</td>
+                            <td>${item.amount}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+            <p class="total">Total Amount: $${data.totalAmount}</p>
+            <p><strong>Remarks:</strong> ${data.remarks}</p>
+        </body>
+        </html>
+    `;
+};
+
 const expenditureColumnDefs = [
-      { headerName: "Date", field: "date", sortable: true, filter: true },
+      { 
+        headerName: "Date",
+        field: "date",
+        sortable: true,
+        filter: true,
+        valueGetter: params => {
+            return formatDate(params.data.date); // Format the date here
+        }
+    }, 
       { headerName: "Title", field: "title", sortable: true, filter: true },
       { headerName: "Total Amount", field: "totalAmount", sortable: true, filter: true },
       { headerName: "Remarks", field: "remarks", sortable: true, filter: true },
@@ -680,12 +1059,21 @@ async function fetchMembers() {
          membersData.value = data.students.map(student => ({
             english_name: student.english_name,
             student_id: student.student_id,
+            email: student.email,
+            gender: student.gender,
+            _id: student._id,
         }));
     } catch (error) {
         console.error('Error fetching home events:', error);
     }
 };
 
+const memberColumnDefs = [
+      { headerName: "Name", field: "english_name", sortable: true, filter: true },
+      { headerName: "Student Id", field: "student_id", sortable: true, filter: true },
+      { headerName: "Email", field: "email", sortable: true, filter: true },
+      { headerName: "Gender", field: "gender", sortable: true, filter: true },
+    ];
 const admins = ref([]);
 const selectedAdmin = ref('');
 const EXselectedAdmin = ref('');
@@ -704,19 +1092,426 @@ const fetchAdmins = async () => {
     }
 };
 
-onMounted(() => {
-    fetchMembers();
-    fetchMemberCount();
-    fetchTotalCommentsCount();
-    fetchTodayRegistrationCount();
-    fetchAdmins();
-    fetchIncomeRecords();
-    fetchExpenditureRecords();
-    fetchEarning();
-})
+async function fetchIncomeRecordsChart(month, year) {
+  const response = await fetch(`/api/income_records?month=${month}&year=${year}`);
+  return response.json();
+}
+
+function aggregateIncome(records) {
+    const incomeByDay = {};
+    records.forEach(record => {
+        // Parse issueDate directly
+        const date = new Date(record.date); // Use record.issueDate directly
+        const day = date.getUTCDate(); // Use getUTCDate() for consistency
+        const amount = record.totalAmount;
+
+        // Check if day is a valid number
+        if (!isNaN(day)) {
+            if (!incomeByDay[day]) {
+                incomeByDay[day] = 0;
+            }
+            incomeByDay[day] += amount;
+        } else {
+            console.error('Invalid date:', record.date); // Log invalid dates
+        }
+    });
+    return incomeByDay;
+}
+
+
+// Method to prepare chart data
+function prepareChartData(incomeByDay, daysInMonth) {
+  const labels = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+  const data = labels.map(day => incomeByDay[day] || 0);
+  return { labels, data };
+}
+
+watch(isFinance, (newValue) => {
+    if (newValue) {
+        renderIncomeChart(); // Call renderChart when isFinance is activated
+    }
+});
+let incomeChart = null; // Store the chart instance
+
+async function renderIncomeChart() {
+    const month = 3; // March
+    const year = 2025;
+    const records = await fetchIncomeRecordsChart(month, year);
+    
+    console.log('Fetched Records:', records); // Check fetched records
+
+    // Aggregate income records by day
+    const incomeByDay = aggregateIncome(records);
+    console.log('Aggregated Income by Day:', incomeByDay); // Check aggregation
+
+    // Calculate the number of days in the month
+    const daysInMonth = new Date(year, month, 0).getDate();
+    
+    // Prepare chart data
+    const { labels, data } = prepareChartData(incomeByDay, daysInMonth);
+    console.log('Chart Labels:', labels); // Check labels
+    console.log('Chart Data:', data); // Check data
+
+    const ctx = document.getElementById('incomeChart');
+    if (!ctx) {
+        console.error('Canvas element not found!');
+        return; // Exit early if the canvas is not found
+    }
+
+    const context = ctx.getContext('2d');
+
+     incomeChart = new Chart(context, {
+        responsive: true,
+        maintainAspectRatio: true,
+        type: 'line',
+        data: {
+            labels: labels, // Use prepared labels
+            datasets: [{
+                label: 'Income Flow',
+                data: data, // Use prepared data
+                borderColor: 'rgba(75, 192, 192, 1)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                fill: true,
+            }]
+        },
+        options: {
+            scales: {
+                x: {
+                    type: 'category', // Specify the scale type for x-axis
+                },
+                y: {
+                    type: 'linear', // Specify the scale type for y-axis
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: `Income Records for ${new Date(year, month - 1).toLocaleString('default', { month: 'long' })} ${year}`,
+                    font: {
+                        size: 18
+                    },
+                }
+            }
+        }
+    });
+}
+async function renderFilterIncomeChart(month,year) {
+    await deleteFilterIncomeChart(); // Delete any existing chart
+
+    const filterincomemonth = month; // March
+    const filterincomeyear = year;
+    const records = await fetchIncomeRecordsChart(filterincomemonth, filterincomeyear);
+    
+    console.log('Fetched Records:', records); // Check fetched records
+
+    // Aggregate income records by day
+    const incomeByDay = aggregateIncome(records);
+    console.log('Aggregated Income by Day:', incomeByDay); // Check aggregation
+
+    // Calculate the number of days in the month
+    const daysInMonth = new Date(year, month, 0).getDate();
+    
+    // Prepare chart data
+    const { labels, data } = prepareChartData(incomeByDay, daysInMonth);
+    console.log('Chart Labels:', labels); // Check labels
+    console.log('Chart Data:', data); // Check data
+
+    const ctx = document.getElementById('incomeChart');
+    if (!ctx) {
+        console.error('Canvas element not found!');
+        return; // Exit early if the canvas is not found
+    }
+
+
+    const context = ctx.getContext('2d');
+
+    incomeChart = new Chart(context, {
+        responsive: true,
+    maintainAspectRatio: true,
+        type: 'line',
+        data: {
+            labels: labels, // Use prepared labels
+            datasets: [{
+                label: 'Income Flow',
+                data: data, // Use prepared data
+                borderColor: 'rgba(75, 192, 192, 1)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                fill: true,
+            }]
+        },
+        options: {
+            scales: {
+                x: {
+                    type: 'category', // Specify the scale type for x-axis
+                },
+                y: {
+                    type: 'linear', // Specify the scale type for y-axis
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: `Expenditure Records for ${new Date(year, month - 1).toLocaleString('default', { month: 'long' })} ${year}`,
+                    font: {
+                        size: 18
+                    }
+                }
+            }
+        }
+    });
+
+}
+
+
+async function deleteFilterIncomeChart() {
+    if (incomeChart instanceof Chart) { // Check if incomeChart is a Chart instance
+        incomeChart.destroy(); // Destroy the existing chart instance
+        incomeChart = null; // Clear the reference
+        console.log('Chart deleted.');
+    } else {
+        console.log('No chart to delete or it is not a valid Chart instance.');
+    }
+}
+
+
+
+const fetchIncomeRecordsByDate = async () => {
+    const month = parseInt(document.getElementById('filterincomemonth').value, 10);
+    const year = parseInt(document.getElementById('filterincomeyear').value, 10);
+    await renderFilterIncomeChart(month, year);
+};
+async function fetchExpenditureRecordsChart(month, year) {
+  const response = await fetch(`/api/expenditure_records?month=${month}&year=${year}`);
+  return response.json();
+}
+
+function aggregateExpenditure(records) {
+    const incomeByDay = {};
+    records.forEach(record => {
+        // Parse issueDate directly
+        const date = new Date(record.date); // Use record.issueDate directly
+        const day = date.getUTCDate(); // Use getUTCDate() for consistency
+        const amount = record.totalAmount;
+
+        // Check if day is a valid number
+        if (!isNaN(day)) {
+            if (!incomeByDay[day]) {
+                incomeByDay[day] = 0;
+            }
+            incomeByDay[day] += amount;
+        } else {
+            console.error('Invalid date:', record.date); // Log invalid dates
+        }
+    });
+    return incomeByDay;
+}
+
+
+watch(isFinance, (newValue) => {
+    if (newValue) {
+        renderExpenditureChart(); // Call renderChart when isFinance is activated
+    }
+});
+let expenditureChart = null; // Store the chart instance
+
+async function renderExpenditureChart() {
+    const month = 3; // March
+    const year = 2025;
+    const records = await fetchExpenditureRecordsChart(month, year);
+    
+    console.log('Fetched Records:', records); // Check fetched records
+
+    // Aggregate income records by day
+    const incomeByDay = aggregateExpenditure(records);
+    console.log('Aggregated Income by Day:', incomeByDay); // Check aggregation
+
+    // Calculate the number of days in the month
+    const daysInMonth = new Date(year, month, 0).getDate();
+    
+    // Prepare chart data
+    const { labels, data } = prepareChartData(incomeByDay, daysInMonth);
+    console.log('Chart Labels:', labels); // Check labels
+    console.log('Chart Data:', data); // Check data
+
+    const ctx = document.getElementById('expenditureChart');
+    if (!ctx) {
+        console.error('Canvas element not found!');
+        return; // Exit early if the canvas is not found
+    }
+
+    const context = ctx.getContext('2d');
+
+     expenditureChart = new Chart(context, {
+        responsive: true,
+        maintainAspectRatio: true,
+        type: 'line',
+        data: {
+            labels: labels, // Use prepared labels
+            datasets: [{
+                label: 'Income Flow',
+                data: data, // Use prepared data
+                borderColor: 'rgba(75, 192, 192, 1)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                fill: true,
+            }]
+        },
+        options: {
+            scales: {
+                x: {
+                    type: 'category', // Specify the scale type for x-axis
+                },
+                y: {
+                    type: 'linear', // Specify the scale type for y-axis
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: `Expenditure Records for ${new Date(year, month - 1).toLocaleString('default', { month: 'long' })} ${year}`,
+                    font: {
+                        size: 18
+                    }
+                }
+            }
+        }
+    });
+}
+async function renderFilterExpenditureChart(month,year) {
+    await deleteFilterExpenditureChart(); // Delete any existing chart
+
+    const filterincomemonth = month; // March
+    const filterincomeyear = year;
+    const records = await fetchExpenditureRecordsChart(filterincomemonth, filterincomeyear);
+    
+    console.log('Fetched Records:', records); // Check fetched records
+
+    // Aggregate income records by day
+    const incomeByDay = aggregateExpenditure(records);
+    console.log('Aggregated Income by Day:', incomeByDay); // Check aggregation
+
+    // Calculate the number of days in the month
+    const daysInMonth = new Date(year, month, 0).getDate();
+    
+    // Prepare chart data
+    const { labels, data } = prepareChartData(incomeByDay, daysInMonth);
+    console.log('Chart Labels:', labels); // Check labels
+    console.log('Chart Data:', data); // Check data
+
+    const ctx = document.getElementById('expenditureChart');
+    if (!ctx) {
+        console.error('Canvas element not found!');
+        return; // Exit early if the canvas is not found
+    }
+
+    const context = ctx.getContext('2d');
+
+     expenditureChart = new Chart(context, {
+        responsive: true,
+    maintainAspectRatio: true,
+        type: 'line',
+        data: {
+            labels: labels, // Use prepared labels
+            datasets: [{
+                label: 'Income Flow',
+                data: data, // Use prepared data
+                borderColor: 'rgba(75, 192, 192, 1)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                fill: true,
+            }]
+        },
+        options: {
+            scales: {
+                x: {
+                    type: 'category', // Specify the scale type for x-axis
+                },
+                y: {
+                    type: 'linear', // Specify the scale type for y-axis
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: `Income Records for ${new Date(year, month - 1).toLocaleString('default', { month: 'long' })} ${year}`,
+                    font: {
+                        size: 18
+                    }
+                }
+            }
+        }
+    });
+}
+
+
+async function deleteFilterExpenditureChart() {
+    if (expenditureChart instanceof Chart) { // Check if incomeChart is a Chart instance
+        expenditureChart.destroy(); // Destroy the existing chart instance
+        expenditureChart = null; // Clear the reference
+        console.log('Chart deleted.');
+    } else {
+        console.log('No chart to delete or it is not a valid Chart instance.');
+    }
+}
+
+
+
+const fetchExpenditureRecordsByDate = async () => {
+    const month = parseInt(document.getElementById('filterexpendituremonth').value, 10);
+    const year = parseInt(document.getElementById('filterexpenditureyear').value, 10);
+    await renderFilterExpenditureChart(month, year);
+};
+
+const categories = ref([]); 
+// Fetch categories from the database
+const fetchCategories = async () => {
+    try {
+        const response = await axios.get('/api/finance_category'); // Adjust the endpoint as necessary
+        categories.value = response.data; // Assuming the response contains an array of categories
+    } catch (error) {
+        console.error('Error fetching categories:', error);
+    }
+};
+const inventory_categories = ref([]); 
+// Fetch categories from the database
+const fetchInventoryCategories = async () => {
+    try {
+        const response = await axios.get('/api/inventory_category'); // Adjust the endpoint as necessary
+        inventory_categories.value = response.data; // Assuming the response contains an array of categories
+    } catch (error) {
+        console.error('Error fetching categories:', error);
+    }
+};
+const isLoading = ref(true); // Loading state
+
+const fetchData = async () => {
+    await Promise.all([
+        fetchMembers(),
+        fetchMemberCount(),
+        fetchTotalCommentsCount(),
+        fetchTodayRegistrationCount(),
+        fetchAdmins(),
+        fetchIncomeRecords(),
+        fetchExpenditureRecords(),
+        fetchEarning(),
+        renderIncomeChart(),
+        renderExpenditureChart(),
+        fetchEvents(),
+        fetchCategories(),
+        fetchInventoryCategories()
+    ]);
+};
+
+onMounted(async () => {
+    await fetchData();
+    isLoading.value = false; // Set loading to false after all data is fetched
+});
 
 const title = ref('');
 const incomeDate = ref('');
+const selectedIncomeCategory=ref('');
 const feeItems = ref([{ feeItem: '', itemName: '', quantity: 1, unitPrice: 0, discount: 0, amount: 0 }]);
 const remarks = ref('');
 const createReceipt = ref(false);
@@ -760,13 +1555,14 @@ const saveIncomeRecord = async () => {
     const recordData = {
         title: title.value,
         date: incomeDate.value,
+        category: selectedIncomeCategory.value,
         personInCharge: selectedAdmin.value,
         feeItems: feeItems.value,
         remarks: remarks.value,
         createReceipt: createReceipt.value,
         issueDate: issueDate.value,
         billTo: billTo.value,
-        totalAmount: totalAmount.value,
+        totalAmount: parseFloat(totalAmount.value),
     };
 
     try {
@@ -783,8 +1579,9 @@ const saveIncomeRecord = async () => {
         }
 
         const result = await response.json();
-        console.log('Income record saved successfully:', result);
-        window.location.href = '/dashboard';
+// Before redirecting
+localStorage.setItem('toastrMessage', 'Income record added successfully!');
+window.location.href = '/dashboard';
 
     } catch (error) {
         console.error('Error saving income record:', error);
@@ -792,8 +1589,17 @@ const saveIncomeRecord = async () => {
     }
 };
 
+// On the dashboard page
+const message = localStorage.getItem('toastrMessage');
+if (message) {
+    toastr.success(message);
+    localStorage.removeItem('toastrMessage'); // Clear the message after displaying
+}
+
+
 const EXtitle = ref('');
 const expenditureDate = ref('');
+const selectedExpenditureCategory = ref('');
 const EXfeeItems = ref([{ feeItem: '', itemName: '', quantity: 1, unitPrice: 0, discount: 0, amount: 0 }]);
 const EXremarks = ref('');
 
@@ -839,6 +1645,7 @@ const saveExpenditureRecord = async () => {
     const recordData = {
         title: EXtitle.value,
         date: expenditureDate.value,
+        category: selectedExpenditureCategory.value,
         personInCharge: EXselectedAdmin.value,
         feeItems: EXfeeItems.value,
         remarks: EXremarks.value,
@@ -859,7 +1666,7 @@ const saveExpenditureRecord = async () => {
         }
 
         const result = await response.json();
-        console.log('Expenditure record saved successfully:', result);
+        localStorage.setItem('toastrMessage', 'Expenditure record added successfully!');        
         window.location.href = '/dashboard';
 
     } catch (error) {
@@ -884,23 +1691,172 @@ const saveExpenditureRecord = async () => {
         document.getElementById("invoiceIncomeModal").style.display = "none";
     }
 
+    function openFinancialReportModal() {
+        document.getElementById("FinancialReportModal").style.display = "block";
+    }
+
+    function closeFinancialReportModal() {
+        document.getElementById("FinancialReportModal").style.display = "none";
+    }
+    function openInventoryModal() {
+        document.getElementById("InventoryModal").style.display = "block";
+    }
+
+    function closeInventoryModal() {
+        document.getElementById("InventoryModal").style.display = "none";
+    }
+
     function openExpenditureRecord(){
         IncomeRecord.value = false;
         ExpenditureRecord.value = true;
         fetchExpenditureRecords();
+        renderExpenditureChart();
     }
     function openIncomeRecord(){
         IncomeRecord.value = true;
         ExpenditureRecord.value = false;
         fetchIncomeRecords();
+        renderIncomeChart();
     }
 
-    const onRowClickedIncome = (event) => {
-  const recordId = event.data._id; // Assuming your record has an 'id' field
-  router.push(`/incomerecord/${recordId}`);};
+  
 const onRowClickedExpenditure = (event) => {
   const recordId = event.data._id; // Assuming your record has an 'id' field
   router.push(`/expenditurerecord/${recordId}`);};
+
+  const ReportDateFrom = ref('');
+const ReportDateTo = ref('');
+const reportIncomeRecords = ref([]);
+const reportExpenditureRecords = ref([]);
+
+
+const selectedCategory = ref(''); // Reactive variable for selected category
+
+const fetchFinancialData = async (dateFrom, dateTo) => {
+    await fetchIncomeRecords();
+    await fetchExpenditureRecords();
+
+    // Filter and sort income records by date range and category
+    reportIncomeRecords.value = incomeRecords.value
+        .filter(record => {
+            const recordDate = new Date(record.date);
+            const isInDateRange = recordDate >= new Date(dateFrom) && recordDate <= new Date(dateTo);
+            const isInCategory = selectedCategory.value ? record.category === selectedCategory.value : true; // Check category
+            return isInDateRange && isInCategory;
+        })
+        .sort((a, b) => new Date(a.date) - new Date(b.date)); // Sort by date ascending
+
+    // Filter and sort expenditure records by date range and category
+    reportExpenditureRecords.value = expenditureRecords.value
+        .filter(record => {
+            const recordDate = new Date(record.date);
+            const isInDateRange = recordDate >= new Date(dateFrom) && recordDate <= new Date(dateTo);
+            const isInCategory = selectedCategory.value ? record.category === selectedCategory.value : true; // Check category
+            return isInDateRange && isInCategory;
+        })
+        .sort((a, b) => new Date(a.date) - new Date(b.date)); // Sort by date ascending
+};
+
+
+
+const saveFinancialReport = async () => {
+    const dateFrom = ReportDateFrom.value;
+    const dateTo = ReportDateTo.value;
+
+    // Fetch financial data based on the selected date range
+    await fetchFinancialData(dateFrom, dateTo);
+
+    // Generate PDF
+    await createPDF(dateFrom, dateTo);
+
+    // Close the modal after generating the report
+    closeFinancialReportModal();
+};
+
+const formatReportDate = (dateString) => {
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+
+const createPDF = async (dateFrom, dateTo) => {
+    const doc = new jsPDF();
+
+    // Title
+    doc.setFontSize(22);
+    doc.text('Financial Report', 10, 20);
+    doc.setFontSize(12);
+    doc.text(`Date From: ${dateFrom}`, 10, 30);
+    doc.text(`Date To: ${dateTo}`, 10, 40);
+    doc.setLineWidth(0.5);
+    doc.line(10, 45, 200, 45); // Horizontal line
+
+    // Income Records
+    doc.setFontSize(16);
+    doc.text('Income Details:', 10, 55);
+    doc.setFontSize(12);
+    
+    // Table Header
+    doc.text('Date', 10, 65);
+    doc.text('Title', 60, 65);
+    doc.text('Amount', 140, 65);
+    doc.setLineWidth(0.5);
+    doc.line(10, 68, 200, 68); // Horizontal line
+
+    let incomeY = 73; // Starting Y position for income records
+    reportIncomeRecords.value.forEach((income) => {
+        doc.text(formatReportDate(income.date), 10, incomeY);
+        doc.text(income.title, 60, incomeY);
+        doc.text(`$${income.totalAmount.toFixed(2)}`, 140, incomeY);
+        incomeY += 8; // Increment Y position for next record
+    });
+
+    // Total Income
+    const totalIncome = reportIncomeRecords.value.reduce((sum, record) => sum + record.totalAmount, 0);
+    doc.setFontSize(14);
+    doc.text(`Total Income: $${totalIncome.toFixed(2)}`, 10, incomeY);
+    incomeY += 10; // Space after total
+
+    // Expenditure Records
+    doc.setFontSize(16);
+    doc.text('Expenditure Details:', 10, incomeY);
+    doc.setFontSize(12);
+    
+    // Table Header
+    doc.text('Date', 10, incomeY + 10);
+    doc.text('Title', 60, incomeY + 10);
+    doc.text('Amount', 140, incomeY + 10);
+    doc.setLineWidth(0.5);
+    doc.line(10, incomeY + 13, 200, incomeY + 13); // Horizontal line
+
+    let expenditureY = incomeY + 17; // Starting Y position for expenditure records
+    reportExpenditureRecords.value.forEach((expenditure) => {
+        doc.text(formatReportDate(expenditure.date), 10, expenditureY);
+        doc.text(expenditure.title, 60, expenditureY);
+        doc.text(`$${expenditure.totalAmount.toFixed(2)}`, 140, expenditureY);
+        expenditureY += 8; // Increment Y position for next record
+    });
+
+    // Total Expenditure
+    const totalExpenditure = reportExpenditureRecords.value.reduce((sum, record) => sum + record.totalAmount, 0);
+    doc.setFontSize(14);
+    doc.text(`Total Expenditure: $${totalExpenditure.toFixed(2)}`, 10, expenditureY);
+    expenditureY += 10; // Space after total
+
+    // Final Summary
+    doc.setFontSize(16);
+    doc.text('Summary:', 10, expenditureY);
+    doc.setFontSize(14);
+    doc.text(`Net Income: $${(totalIncome - totalExpenditure).toFixed(2)}`, 10, expenditureY + 10);
+
+    // Save the PDF
+    doc.save(`Financial_Report_${dateFrom}_to_${dateTo}.pdf`);
+};
+
+
 </script>
 
 <script>
@@ -908,24 +1864,6 @@ export default {
     name: 'App',
     components: {
         FullCalendar,
-    },
-  
-
-    data() {
-        return {
-            calendarOptions: {
-                plugins: [dayGridPlugin, interactionPlugin],
-                initialView: 'dayGridMonth',
-                dateClick: this.handleDateClick,
-                events: [
-                    { title: 'event 1', date: '2019-04-01' },
-                    { title: 'event 2', date: '2019-04-02' }
-                ],
-                height: '500px',
-
-            },
-            
-        }
     },
     methods: {
         handleDateClick: function (arg) {
@@ -1184,5 +2122,121 @@ hr {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); /* Hover shadow effect */
     transform: translateY(-2px); /* Slight lift effect */
 }
+.print-button {
+    background-color: #007bff; /* Bootstrap primary color */
+    color: white;
+    border: none;
+    padding: 3px 8px; /* Reduced padding */
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px; /* Smaller font size */
+    line-height: 2; /* Adjust line height */
+}
+.print-button:hover {
+    background-color: #0056b3; /* Darker shade on hover */
+}
+.print-button.disabled {
+    background-color: #ccc; /* Grey background for disabled state */
+    color: #666; /* Grey text */
+    cursor: not-allowed; /* Change cursor to indicate unclickable */
+}
+.chart-container {
+    width: 100%; /* Full width */
+    height:500px;
+}
+#expenditureChart{
+    width: 100%; /* Full width */
+    height:400px;
+}
+/* Custom styles for FullCalendar */
+.fc {
+    font-family: 'Arial', sans-serif; /* Change to your preferred font */
+}
 
+.fc-toolbar {
+    background-color: white; /* Header background color */
+    color: white; /* Header text color */
+    padding: 10px; /* Add some padding */
+}
+
+.fc-daygrid-event {
+    background-color: #2196F3; /* Event background color */
+    color: white; /* Event text color */
+    border-radius: 5px; /* Rounded corners */
+    padding: 5px; /* Padding inside events */
+}
+
+.fc-daygrid-event:hover {
+    background-color: #1976D2; /* Darker shade on hover */
+}
+
+.fc-day {
+    border: 1px solid #e0e0e0; /* Add borders to days */
+}
+
+.fc-day:hover {
+    background-color: #f5f5f5; /* Highlight day on hover */
+}
+.calendar {
+  position: relative;
+  min-height: 400px;
+  width: 100%;
+  padding: 20px;
+  background: var(--white);
+  box-shadow: 0 7px 25px rgba(0, 0, 0, 0.08);
+  border-radius: 20px;
+}
+.fab-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.fab {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #4CAF50; /* Change to your preferred color */
+    color: white;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.3s;
+}
+
+.fab:hover {
+    background-color: #45a049; /* Darker shade on hover */
+}
+
+.fab-menu {
+    display: flex;
+    flex-direction: column;
+    margin-top: 10px;
+}
+
+.fab-option {
+    width: 200px;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: #ffffff; /* Background color for options */
+    color: #333; /* Text color */
+    border: 1px solid #ccc;
+    cursor: pointer;
+    margin-bottom: 5px;
+    transition: background-color 0.3s;
+}
+
+.fab-option:hover {
+    background-color: #f1f1f1; /* Change background on hover */
+}
+.loading-animation {
+    /* Add your loading animation styles here */
+    text-align: center;
+    font-size: 20px;
+    margin-top: 50px;
+}
 </style>

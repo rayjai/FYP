@@ -57,6 +57,8 @@ import { onMounted, ref } from "vue";
 import { jwtDecode } from "jwt-decode";
 import axios from 'axios';
 import '@/assets/css/event.css';
+import toastr from 'toastr';
+import 'toastr/build/toastr.min.css'; 
 
 let isAdmin = ref(false);
 let isStudent = ref(false);
@@ -126,6 +128,12 @@ const handleSubmit = () => {
             console.error(error);
         });
 };
+
+const message = localStorage.getItem('toastrMessage');
+if (message) {
+    toastr.success(message);
+    localStorage.removeItem('toastrMessage'); // Clear the message after displaying
+}
 
 // Lifecycle hook
 onMounted(() => {

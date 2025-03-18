@@ -5,6 +5,11 @@ import { onMounted, ref, computed } from "vue";
 import { jwtDecode } from "jwt-decode";
 import '@/assets/css/event.css'
 import axios from 'axios';
+import { useRoute,useRouter } from 'vue-router';
+import toastr from 'toastr';
+import 'toastr/build/toastr.min.css'; 
+
+const router = useRouter();
 
 
 let isAdmin = ref(false);
@@ -107,6 +112,28 @@ const filteredEvents = computed(() => {
     );
 });
 
+
+const confirmDelete = (eventId) => {
+    if (confirm("Are you sure you want to delete this event?")) {
+        deleteEvent(eventId);
+    }
+};
+
+const deleteEvent = async (eventId) => {
+    try {
+        await axios.delete(`/api/event/${eventId}`); // Adjust the API endpoint as needed
+        // Optionally, refresh the list or redirect after deletion
+        router.push('/event'); // Redirect to the events page after deletion
+    } catch (error) {
+        console.error('Error deleting event:', error);
+    }
+};
+
+const message = localStorage.getItem('toastrMessage');
+if (message) {
+    toastr.success(message);
+    localStorage.removeItem('toastrMessage'); // Clear the message after displaying
+}
 </script>
 
 <template>
@@ -160,12 +187,20 @@ const filteredEvents = computed(() => {
                                     <a :href="'/qrcodescan/' + event._id" class="btn btn-primary" @click.stop>
                                         Attendance
                                     </a>
-                                    <div v-if="new Date(event.eventDateFrom) > new Date()">
+                                    
+                                    <!-- Delete Button -->
+    <a @click.stop="confirmDelete(event._id)" class="btn btn-danger">
+        Delete
+    </a>
+                                </div>
+                                <div class="button-container">
+
+                                <div v-if="new Date(event.eventDateFrom) > new Date()">
                                         <a :href="'/eventregister/' + event._id" class="btn btn-primary" @click.stop>
                                             Register
                                         </a>
                                     </div>
-                                </div>
+                                    </div>
                             </div>
                         </div>
                     </router-link>

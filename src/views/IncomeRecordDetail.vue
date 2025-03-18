@@ -6,6 +6,14 @@
           {{ isEditing ? 'Submit' : 'Edit' }}
         </button>
         <button @click="confirmDelete" class="delete-button">Delete</button>
+        <!-- Print Receipt Button -->
+        <button 
+                v-if="record && record.createReceipt" 
+                @click="generateReceiptPDF" 
+                class="print-button"
+            >
+                Print Receipt
+            </button>
       </div>
       <h2>Record Details</h2>
       <div v-if="record">
@@ -19,6 +27,13 @@
           <span v-if="!isEditing">{{ formatDate(record.date) }}</span>
           <input v-else type="date" v-model="editedRecord.date" />
         </div>
+        <div class="detail-field">
+                <strong>Category:</strong>
+                <span v-if="!isEditing">{{ record.category }}</span>
+                <select v-else v-model="editedRecord.category">
+                    <option v-for="category in categories" :key="category._id" :value="category.category">{{ category.category }}</option>
+                </select>
+            </div>
         <div class="detail-field">
           <strong>Person In Charge:</strong>
           <span v-if="!isEditing">{{ record.personInCharge }}</span>
@@ -145,6 +160,10 @@
   import { ref, onMounted } from 'vue';
   import { useRoute,useRouter } from 'vue-router';
   import axios from 'axios';
+  import jsPDF from 'jspdf'; 
+  import html2canvas from 'html2canvas'; 
+  import toastr from 'toastr';
+import 'toastr/build/toastr.min.css'; 
   
   const route = useRoute();
   const router = useRouter();
@@ -167,6 +186,16 @@ const fetchAdmins = async () => {
     console.error('Error fetching admins:', error);
   }
 };
+const categories = ref([]); // Store fetched categories
+const fetchCategories = async () => {
+    try {
+        const response = await axios.get('/api/finance_category'); // Adjust the endpoint as necessary
+        categories.value = response.data; // Assuming the response contains an array of categories
+    } catch (error) {
+        console.error('Error fetching categories:', error);
+    }
+};
+
 
   
   // Format the date to a more readable format
@@ -198,6 +227,7 @@ const fetchAdmins = async () => {
   });
   onMounted(() => {
   fetchAdmins(); // Fetch admins when the component mounts
+  fetchCategories();
 });
   // Toggle edit mode
   const toggleEdit = () => {
@@ -221,9 +251,15 @@ const fetchAdmins = async () => {
   // Update record
   const updateRecord = async () => {
     try {
-        editedRecord.value.totalAmount = calculateTotalAmount();
+        editedRecord.value.totalAmount = parseFloat(calculateTotalAmount()); 
       await axios.put(`/api/income/detail/${record.value._id}`, editedRecord.value); // Update the record on the server
       record.value = { ...editedRecord.value }; // Update the local record
+      localStorage.setItem('toastrMessage', 'Record Updated successfully!');
+      const message = localStorage.getItem('toastrMessage');
+if (message) {
+    toastr.success(message);
+    localStorage.removeItem('toastrMessage'); // Clear the message after displaying
+}
     } catch (error) {
       console.error('Error updating record:', error);
     }
@@ -244,6 +280,7 @@ const fetchAdmins = async () => {
       console.error('Error deleting record:', error);
     } finally {
       showConfirmDelete.value = false; // Close confirmation dialog
+      localStorage.setItem('toastrMessage', 'Record deleted successfully!');
       router.push('/dashboard');
     }
   };
@@ -290,6 +327,108 @@ const deleteFeeItem = (index) => {
   if (editedRecord.value.feeItems && editedRecord.value.feeItems[index]) {
     editedRecord.value.feeItems.splice(index, 1); // Remove the item at the specified index
   }
+};
+
+// Generate PDF from HTML template
+const generateReceiptPDF = () => {
+    const receiptData = {
+        title: record.value.title,
+        date: record.value.date,
+        personInCharge: record.value.personInCharge,
+        feeItems: record.value.feeItems,
+        remarks: record.value.remarks,
+        totalAmount: record.value.totalAmount,
+        issueDate: record.value.issueDate,
+        billTo: record.value.billTo,
+    };
+
+    // Create receipt HTML
+    const receiptHtml = generateReceiptHtml(receiptData);
+
+    // Create a temporary element to hold the HTML
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = receiptHtml;
+    document.body.appendChild(tempDiv);
+
+    // Use html2canvas to capture the HTML
+    html2canvas(tempDiv, { scale: 2 }).then(canvas => { // Increase scale for better resolution
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF();
+        const imgWidth = 190; // Adjust based on your layout
+        const pageHeight = pdf.internal.pageSize.height;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        let heightLeft = imgHeight;
+
+        let position = 0;
+
+        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+
+        while (heightLeft >= 0) {
+            position = heightLeft - imgHeight;
+            pdf.addPage();
+            pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+        }
+
+        const fileName = `${formatDate(record.value.date)} - ${record.value.title}.pdf`;
+        pdf.save(fileName); // Save the PDF
+
+        // Clean up the temporary element
+        document.body.removeChild(tempDiv);
+    });
+};
+
+// Generate receipt HTML function
+const generateReceiptHtml = (data) => {
+    return `
+        <html>
+        <head>
+            <title>Receipt</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                h1 { text-align: center; }
+                table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+                th { background-color: #f2f2f2; }
+                .total { font-weight: bold; }
+            </style>
+        </head>
+        <body>
+            <h1>Receipt</h1>
+            <p><strong>Title:</strong> ${data.title}</p>
+            <p><strong>Date:</strong> ${formatDate(data.date)}</p>
+            <p><strong>Person In Charge:</strong> ${data.personInCharge}</p>
+            <p><strong>Bill To:</strong> ${data.billTo}</p>
+            <p><strong>Issue Date:</strong> ${formatDate(data.issueDate)}</p>
+            <h2>Fee Items</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fee Item</th>
+                        <th>Item Name</th>
+                        <th>Quantity</th>
+                        <th>Unit Price</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${data.feeItems.map(item => `
+                        <tr>
+                            <td>${item.feeItem}</td>
+                            <td>${item.itemName}</td>
+                            <td>${item.quantity}</td>
+                            <td>${item.unitPrice}</td>
+                            <td>${item.amount}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+            <p class="total">Total Amount: $${data.totalAmount}</p>
+            <p><strong>Remarks:</strong> ${data.remarks}</p>
+        </body>
+        </html>
+    `;
 };
 
 
@@ -429,5 +568,20 @@ select:focus {
     border-color: #007bff;
     outline: none;
 }
+
+.print-button {
+    margin-left: 10px;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    background-color: #28a745; /* Green color for Print button */
+    color: white;
+}
+
+.print-button:hover {
+    background-color: #218838; /* Darker green on hover */
+}
+
   </style>
   

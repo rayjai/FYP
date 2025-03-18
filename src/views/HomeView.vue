@@ -116,6 +116,11 @@ onMounted(() => {
             <h2>Upcoming Events</h2>
           </div>
         </div>
+        <div v-if="upcomingevents.length<=0" class="row">
+          <div class="col-12">
+            <p>There is no upcoming events..</p>
+          </div>
+        </div>
         <div v-if="isStudent">
           <div class="row">
             <div class="col-4" v-for="(event, index) in upcomingevents" :key="index">

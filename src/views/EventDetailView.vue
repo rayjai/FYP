@@ -3,9 +3,13 @@ import Header from '@/components/Header.vue'
 import { onMounted, ref, computed } from "vue";
 import { jwtDecode } from "jwt-decode";
 import '@/assets/css/event.css'
-import { useRoute } from 'vue-router';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+import axios from 'axios';
+import { useRoute,useRouter } from 'vue-router';
+
+const router = useRouter();
+
 
 let isAdmin = ref(false);
 let isStudent = ref(false);
@@ -67,6 +71,21 @@ onMounted(() => {
     fetchRegisteredEvents();
 })
 
+const confirmDelete = (eventId) => {
+    if (confirm("Are you sure you want to delete this event?")) {
+        deleteEvent(eventId);
+    }
+};
+
+const deleteEvent = async (eventId) => {
+    try {
+        await axios.delete(`/api/event/${eventId}`); // Adjust the API endpoint as needed
+        // Optionally, refresh the list or redirect after deletion
+        router.push('/event'); // Redirect to the events page after deletion
+    } catch (error) {
+        console.error('Error deleting event:', error);
+    }
+};
 </script>
 
 <template>
@@ -106,6 +125,9 @@ onMounted(() => {
                 <div v-if="new Date(event.eventDateFrom) > new Date()">
                     <a :href="'/eventregister/' + event._id" class="btn btn-primary" @click.stop>Register</a>
                 </div>
+                <a @click.stop="confirmDelete(event._id)" class="btn btn-danger">
+        Delete
+    </a>
             </div>
             <div class="profile-info">
                 <div class="data-table-container">

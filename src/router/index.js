@@ -147,6 +147,11 @@ const router = createRouter({
       name: 'ExpenditureRecordDetail',
       component: () => import('../views/ExpenditureRecordDetail.vue'),
     },
+    {
+      path: '/memberdetail/:id',
+      name: 'MemberDetail',
+      component: () => import('../views/MemberDetail.vue'),
+    },
   ]
 });
 

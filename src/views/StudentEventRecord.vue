@@ -11,11 +11,16 @@
 
         <div class="profile-info">
             <h4>Registered Events</h4>
-            <DataTable v-if="events" :value="transformedEvents" :paginator="true" :rows="5" :filterDelay="200">
-                <Column field="event_name" header="Event Name" />
-                <Column field="attendance" header="Attendance" />
-            </DataTable>
-            <p v-else>No registered events found.</p>
+            <ag-grid-vue
+            class="ag-theme-alpine"
+            style="width: 100%; height: 500px;"
+            :columnDefs="memberColumnDefs"
+            :rowData="transformedEvents"
+            :pagination="true"
+            :paginationPageSize="10"
+            :defaultColDef="defaultColDef"
+            @rowClicked="onRowClickedMember">
+        </ag-grid-vue>
         </div>
     </div>
 
@@ -29,6 +34,10 @@ import Footer from '@/components/Footer.vue';
 import { jwtDecode } from "jwt-decode";
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+import { AgGridVue } from "ag-grid-vue3";
+import { useRouter } from 'vue-router';  //useRoute
+
+const router = useRouter();
 
 const student = ref({});
 const events = ref([]);
@@ -52,6 +61,7 @@ async function fetchRegisteredEvents() {
             transformedEvents.value = registrationData.map(student => ({
                 event_name: student.eventName,
                 attendance: student.attendance !== undefined ? (student.attendance ? 'Present' : 'Absent') : 'N/A',
+                event_id:student.event_id,
             }));
         }
     } catch (error) {
@@ -61,6 +71,42 @@ async function fetchRegisteredEvents() {
 
 const transformedEvents = ref([]);
 
+const memberColumnDefs = [
+      { headerName: "Event Name", field: "event_name", sortable: true, filter: true },
+      { headerName: "Attendance", field: "attendance", sortable: true, filter: true },
+      
+    ];
+
+const defaultColDef = {
+    resizable: true,
+    flex: 1,
+    minWidth: 100,
+};
+const filterRecords = () => {
+      const query = searchQuery.value.toLowerCase();
+      filteredIncomeRecords.value = incomeRecords.value.filter(record => {
+        return record.personInCharge.toLowerCase().includes(query) ||
+               record.remarks.toLowerCase().includes(query);
+      });
+
+      filteredExpenditureRecords.value = expenditureRecords.value.filter(record => {
+        return record.personInCharge.toLowerCase().includes(query) ||
+               record.remarks.toLowerCase().includes(query);
+      });
+    };
+
+    function onRowClickedMember(event) {
+    // Check if the click target is a print button
+    if (event.event.target.classList.contains('print-button')) {
+        event.event.stopPropagation(); // Prevent row click propagation
+        const id = event.event.target.getAttribute('data-id');
+        handlePrint(id); // Call the print function
+    } else {
+        const recordId = event.data.event_id; // Assuming your record has an '_id' field
+        console.log(event.data);
+        router.push(`/event/detail/${recordId}`); // Navigate to the record page
+    }
+}
 onMounted(() => {
     getinfo();
     fetchRegisteredEvents();

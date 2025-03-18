@@ -6,6 +6,8 @@ import { useRouter } from 'vue-router';
 import { jwtDecode } from "jwt-decode";
 import Spinner from '@/components/Spinner.vue'; // Assuming you have a Spinner component for loading state
 import ConfirmDialog from './ConfirmDialog.vue'; // Import the custom confirm dialog component
+import toastr from 'toastr';
+import 'toastr/build/toastr.min.css'; 
 const router = useRouter();
 
 
@@ -238,6 +240,12 @@ const submitComment = async (postId) => {
         alert('Please enter a comment before submitting.');
     }
 };
+
+const message = localStorage.getItem('toastrMessage');
+if (message) {
+    toastr.success(message);
+    localStorage.removeItem('toastrMessage'); // Clear the message after displaying
+}
 </script>
 
 <template>

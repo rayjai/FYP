@@ -20,6 +20,13 @@
           <input v-else type="date" v-model="editedRecord.date" />
         </div>
         <div class="detail-field">
+                <strong>Category:</strong>
+                <span v-if="!isEditing">{{ record.category }}</span>
+                <select v-else v-model="editedRecord.category">
+                    <option v-for="category in categories" :key="category._id" :value="category.category">{{ category.category }}</option>
+                </select>
+            </div>
+        <div class="detail-field">
           <strong>Person In Charge:</strong>
           <span v-if="!isEditing">{{ record.personInCharge }}</span>
         <select v-else
@@ -131,6 +138,8 @@
   import { ref, onMounted } from 'vue';
   import { useRoute,useRouter } from 'vue-router';
   import axios from 'axios';
+  import toastr from 'toastr';
+import 'toastr/build/toastr.min.css'; 
   
   const route = useRoute();
   const router = useRouter();
@@ -154,7 +163,16 @@ const fetchAdmins = async () => {
   }
 };
 
-  
+const categories = ref([]); // Store fetched categories
+const fetchCategories = async () => {
+    try {
+        const response = await axios.get('/api/finance_category'); // Adjust the endpoint as necessary
+        categories.value = response.data; // Assuming the response contains an array of categories
+    } catch (error) {
+        console.error('Error fetching categories:', error);
+    }
+};
+
   // Format the date to a more readable format
   const formatDate = (dateString) => {
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
@@ -183,6 +201,7 @@ const fetchAdmins = async () => {
   });
   onMounted(() => {
   fetchAdmins(); // Fetch admins when the component mounts
+  fetchCategories();
 });
   // Toggle edit mode
   const toggleEdit = () => {
@@ -205,9 +224,15 @@ const fetchAdmins = async () => {
   // Update record
   const updateRecord = async () => {
     try {
-        editedRecord.value.totalAmount = calculateTotalAmount();
+        editedRecord.value.totalAmount = parseFloat(calculateTotalAmount()); 
       await axios.put(`/api/expenditure/detail/${record.value._id}`, editedRecord.value); // Update the record on the server
       record.value = { ...editedRecord.value }; // Update the local record
+      localStorage.setItem('toastrMessage', 'Record Updated successfully!');
+      const message = localStorage.getItem('toastrMessage');
+if (message) {
+    toastr.success(message);
+    localStorage.removeItem('toastrMessage'); // Clear the message after displaying
+}
     } catch (error) {
       console.error('Error updating record:', error);
     }
@@ -228,6 +253,7 @@ const fetchAdmins = async () => {
       console.error('Error deleting record:', error);
     } finally {
       showConfirmDelete.value = false; // Close confirmation dialog
+      localStorage.setItem('toastrMessage', 'Record deleted successfully!');
       router.push('/dashboard');
     }
   };

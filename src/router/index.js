@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
+import { jwtDecode } from 'jwt-decode'
 
 
 const router = createRouter({
@@ -17,7 +18,11 @@ const router = createRouter({
     {
       path: '/createclub',
       name: 'createclub',
-      component: () => import('../views/CreateClub.vue')
+      component: () => import('../views/CreateClub.vue'),
+      meta: {
+        requiresAuth: true,
+        requiresAdmin: true // Add this line
+      }
     },
     {
       path: '/event',
@@ -101,6 +106,9 @@ const router = createRouter({
       path: '/event/edit/:id',
       name: 'eventedit',
       component: () => import('../views/EventEditView.vue'),
+      meta: {
+        requiresAuth: true // Add meta field to indicate protected route
+      }
     },
     {
       path: '/membershipcard',
@@ -152,23 +160,43 @@ const router = createRouter({
       name: 'MemberDetail',
       component: () => import('../views/MemberDetail.vue'),
     },
+    {
+      path: '/checkout',
+      name: 'CheckOut',
+      component: () => import('../views/checkout.vue'),
+    },
+    {
+      path: '/success',
+      name: 'Success',
+      component: () => import('../views/success.vue'),
+    },
+    {
+      path: '/cancel',
+      name: 'Cancel',
+      component: () => import('../views/cancel.vue'),
+    },
   ]
 });
 
 router.beforeEach((to, from, next) => {
+  const token = localStorage.getItem('token');
+  const isAdmin = token ? jwtDecode(token).user.role === 'admin' : false; // Decode token to check role
+
   if (to.meta.requiresAuth) {
-    const token = localStorage.getItem('token');
     if (token) {
-      // User is authenticated, proceed to the route
-      next();
+      if (to.meta.requiresAdmin && !isAdmin) {
+        // If the route requires admin access and user is not an admin
+        next('/'); // Redirect to home or another page
+      } else {
+        next(); // User is authenticated and authorized
+      }
     } else {
-      // User is not authenticated, redirect to login
-      next('/signin');
+      next('/signin'); // User is not authenticated, redirect to login
     }
   } else {
-    // Non-protected route, allow access
-    next();
+    next(); // Non-protected route, allow access
   }
 });
+
 
 export default router

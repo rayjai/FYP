@@ -43,6 +43,34 @@
                                 placeholder="Enter logo meaning"></textarea>
                         </div>
 
+                        <!-- New Fields -->
+                        <div class="form-group">
+                            <label for="webIcon">Web Icon:</label>
+                            <input type="file" id="webIcon" accept=".png, .jpg"
+                                @change="event => handleFileChange(event, 'webIcon')" />
+                        </div>
+                        <div class="form-group">
+                            <label for="backgroundImage">Background Image:</label>
+                            <input type="file" id="backgroundImage" accept=".png, .jpg"
+                                @change="event => handleFileChange(event, 'backgroundImage')" />
+                        </div>
+                        <div class="form-group">
+                            <label for="logoImage">Logo Image:</label>
+                            <input type="file" id="logoImage" accept=".png, .jpg"
+                                @change="event => handleFileChange(event, 'logoImage')" />
+                        </div>
+                        <div class="form-group">
+                            <label for="aboutImage">About Image:</label>
+                            <input type="file" id="aboutImage" accept=".png, .jpg"
+                                @change="event => handleFileChange(event, 'aboutImage')" />
+                        </div>
+
+                        <!-- New FPS Payment Number Field -->
+                        <div class="form-group">
+                            <label for="fpsPaymentNumber">FPS Payment Number:</label>
+                            <input type="text" id="fpsPaymentNumber" v-model="fpsPaymentNumber" placeholder="Enter FPS Payment Number" />
+                        </div>
+
                         <button type="submit">Create Club</button>
                     </form>
                 </div>
@@ -72,6 +100,15 @@ let poster1 = ref(null);
 let poster2 = ref(null);
 let poster3 = ref(null);
 
+// New reactive references for additional images
+let webIcon = ref(null);
+let backgroundImage = ref(null);
+let logoImage = ref(null);
+let aboutImage = ref(null);
+
+// New reference for FPS Payment Number
+let fpsPaymentNumber = ref('');
+
 // Check user role
 const checkRole = async () => {
     if (localStorage.getItem('token')) {
@@ -87,31 +124,44 @@ const checkRole = async () => {
 };
 
 // Handle file change
-const handleFileChange = (event, posterNumber) => {
+const handleFileChange = (event, fileType) => {
     const file = event.target.files[0]; // Get the first file
-    if (posterNumber === 1) {
+    if (fileType === 1) {
         poster1.value = file; // Store the file in the reactive reference
-    } else if (posterNumber === 2) {
+    } else if (fileType === 2) {
         poster2.value = file;
-    } else if (posterNumber === 3) {
+    } else if (fileType === 3) {
         poster3.value = file;
+    } else if (fileType === 'webIcon') {
+        webIcon.value = file;
+    } else if (fileType === 'backgroundImage') {
+        backgroundImage.value = file;
+    } else if (fileType === 'logoImage') {
+        logoImage.value = file;
+    } else if (fileType === 'aboutImage') {
+        aboutImage.value = file;
     }
-
-
 };
 
 // Handle form submission
 const handleSubmit = () => {
-    console.log(poster1.value, poster2.value, poster3.value); // Check file values
+    console.log(poster1.value, poster2.value, poster3.value, webIcon.value, backgroundImage.value, logoImage.value, aboutImage.value, fpsPaymentNumber.value); // Check file values
 
     const formData = new FormData();
     formData.append('clubName', clubName.value);
     formData.append('description', description.value);
     formData.append('philosophy', philosophy.value);
-    formData.append('logomeaning', logomeaning.value);
+    formData.append('logomeaning', logoMeaning.value);
     if (poster1.value) formData.append('poster1', poster1.value);
     if (poster2.value) formData.append('poster2', poster2.value);
     if (poster3.value) formData.append('poster3', poster3.value);
+    if (webIcon.value) formData.append('webIcon', webIcon.value);
+    if (backgroundImage.value) formData.append('backgroundImage', backgroundImage.value);
+    if (logoImage.value) formData.append('logoImage', logoImage.value);
+    if (aboutImage.value) formData.append('aboutImage', aboutImage.value);
+    
+    // Append FPS Payment Number
+    if (fpsPaymentNumber.value) formData.append('fpsPaymentNumber', fpsPaymentNumber.value);
 
     axios.post('/api/createclub', formData, {
         headers: {
@@ -121,6 +171,8 @@ const handleSubmit = () => {
         .then((response) => {
             console.log(response.data);
             if (response.status === 201) {
+                localStorage.setItem('toastrMessage', 'Club Created Successfully!');
+                const message = localStorage.getItem('toastrMessage');
                 window.location.href = '/event';
             }
         })
@@ -140,3 +192,7 @@ onMounted(() => {
     checkRole();
 });
 </script>
+
+<style>
+/* Add your styles here if needed */
+</style>

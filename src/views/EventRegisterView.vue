@@ -1,6 +1,5 @@
 <script setup>
 import Header from '@/components/Header.vue'
-
 import { onMounted, ref, computed } from "vue";
 import { jwtDecode } from "jwt-decode";
 import '@/assets/css/event.css'
@@ -16,6 +15,13 @@ const inieventid = ref(route.params.id);
 const eventDateFrom = ref();
 const eventName = ref();
 const sectionNumber = ref();
+const stripe = ref(null); // Stripe instance
+const eventType = ref();
+const eventPrice = ref();
+const uniqueKey = ref(null); // Unique key for tracking submission
+
+const fpsPaymentPhoto = ref(null); // To store the uploaded photo for FPS payment
+
 
 let registrationData = ref({
     student_id: '',
@@ -25,9 +31,8 @@ let registrationData = ref({
     attendance:false,
     eventName:eventName,
     eventFromDate:eventDateFrom.value,
+    paymentMethod:'',
 });
-
-
 
 
 const checkrole = async () => {
@@ -58,10 +63,12 @@ async function fetchEventDetails() {
             , { method: 'GET' });
         if (!response.ok) throw new Error('Network response was not ok');
         event.value = await response.json();
-        console.log(event.value);
         sectionNumber.value = Number(event.value.sectionNumber);
         eventDateFrom.value = event.value.eventDateFrom;
         eventName.value = event.value.eventName;
+        eventType.value = event.value.eventType;
+        eventPrice.value = event.value.eventPrice; // Add this line in fetchEventDetails
+
     } catch (error) {
         console.error('Error fetching event details:', error);
     }
@@ -70,37 +77,111 @@ const checkScroll = () => {
     const { scrollTop, scrollHeight, clientHeight } = termsContent.value;
     termsAgreed.value = scrollTop + clientHeight >= scrollHeight;
 };
+const isLoading = ref(false);
+
+const handleCheckout = async () => {
+    isLoading.value = true;
+    uniqueKey.value = Date.now() + Math.random(); 
+
+    // Collect all necessary data for registration
+    registrationData.value.event_id = inieventid.value; // Ensure this is set correctly
+    registrationData.value.eventName = eventName.value; // Set event name
+    registrationData.value.eventDateFrom = eventDateFrom.value; // Set event date from
+
+    const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            eventName: registrationData.value.eventName,
+            eventPrice: eventPrice.value * 100,
+            registrationData: registrationData.value,
+            uniqueKey: uniqueKey.value,
+        }),
+    });
+
+    const session = await response.json();
+    if (session.url) {
+        window.location.href = session.url; // Redirect to Stripe Checkout
+    } else {
+        console.error('Error creating session:', session.message || 'No message returned');
+    }
+    isLoading.value = false;
+};
+
+
+const handleFileChange = (event) => {
+    fpsPaymentPhoto.value = event.target.files[0];
+    console.log('FPS payment photo:', fpsPaymentPhoto.value); // Debugging line
+};
+
 
 const handleSubmit = async () => {
-    registrationData.eventName = eventName;
-    registrationData.eventDateFrom = eventDateFrom.value;
-    try {
-        const response = await fetch('/api/eventregister', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(registrationData.value)
-        });
+    registrationData.value.eventName = eventName.value;
+    registrationData.value.eventDateFrom = eventDateFrom.value;
 
-        if (!response.ok) {
-            throw new Error('Error submitting register');
-        }
-
-        const data = await response.json();
-        console.log(data);
-
-        router.push('/event');
-    } catch (error) {
-        console.error('Error submitting register:', error);
-
-        alert('Error register syllabus. Please try again.');
+    const formData = new FormData();
+    
+    // Append all necessary fields from registrationData
+    formData.append('student_id', registrationData.value.student_id);
+    formData.append('selectedSession', registrationData.value.selectedSession);
+    formData.append('multipleSection', registrationData.value.multipleSection); // Include multipleSection
+    formData.append('event_id', registrationData.value.event_id);
+    formData.append('attendance', registrationData.value.attendance); // Include attendance
+    formData.append('eventName', registrationData.value.eventName); // Include eventName
+    formData.append('eventDateFrom', registrationData.value.eventDateFrom); // Include eventFromDate
+    formData.append('paymentMethod', registrationData.value.paymentMethod);
+    
+    // Check if the payment method is FPS and if a photo is uploaded
+    if (registrationData.value.paymentMethod === 'fps' && fpsPaymentPhoto.value) {
+        formData.append('fpsPaymentPhoto', fpsPaymentPhoto.value); // Append the uploaded photo
     }
-}
+console.log(formData);
+    if (registrationData.value.paymentMethod === 'online') {
+        // Call handleCheckout instead of submitting the form
+        await handleCheckout();
+    } else {
+        // Regular form submission logic
+        try {
+            const response = await fetch('/api/eventregister', {
+                method: 'POST',
+                body: formData, // No need for headers; FormData sets the correct Content-Type
+            });
+
+            if (!response.ok) {
+                throw new Error('Error submitting register');
+            }
+
+            const data = await response.json();
+            console.log(data);
+            localStorage.setItem('toastrMessage', 'Event Registration Successful!');
+            router.push('/event');
+        } catch (error) {
+            console.error('Error submitting register:', error);
+            alert('Error registering for the event. Please try again.');
+        }
+    }
+};
+
+const content = ref([]);
+const clubId = ref('6755de91eb5ae88eaeaf53e3');
+
+async function fetchHomeContent() {
+  try {
+    const response = await fetch('/api/club/detail/'+ clubId.value);
+    const data = await response.json();
+    content.value = data;
+  } catch (error) {
+    console.error('Error fetching home events:', error);
+  }
+};
+
 
 onMounted(() => {
     checkrole();
-    fetchEventDetails()
+    fetchEventDetails();
+    fetchHomeContent();
 })
 
 </script>
@@ -149,19 +230,48 @@ onMounted(() => {
                 <div v-if="event.sectionNumber != 0">
                     <div class="form-group">
                         <label>Select Session:</label>
-                        <div style="display: flex;">
-                            <div v-for="(session, index) in event.sections" :key="index"> <!-- Use index as key -->
-                                <div class="radio-select">
-                                    <input type="radio" :id="'session-' + index" :value="index"
-                                        v-model="registrationData.selectedSession" />
-                                    <label :for="'session-' + index" style="padding-left: 10px; padding-bottom: 0px;">{{
-                session }}</label>
-                                </div>
-                            </div>
+                        <div style="display: flex; flex-direction: column;">
+                    <div v-for="index in sectionNumber" :key="index">
+                        <div class="radio-select">
+                            <input type="radio" :id="'session-' + index" :value="index" v-model="registrationData.selectedSession" />
+                            <label :for="'session-' + index" style="padding-left: 10px;">Session {{ index }}</label>
                         </div>
                     </div>
                 </div>
+                    </div>
+                </div>
                 <div v-else><input type="radio" value="0" v-model="registrationData.multipleSection" hidden /></div>
+                
+
+                   <!-- Payment Method Selection -->
+                <div v-if="event.eventType === 'charged'">
+                   <div class="form-group">
+                    <label for="payment-method">Payment Method:</label>
+                    <select id="payment-method" v-model="registrationData.paymentMethod" required>
+                        <option value="" disabled>Select a payment method</option>
+                        <option value="online">Online Payment</option>
+                        <option value="fps">FPS Payment</option>
+                        <option value="cash">Cash</option>
+                    </select>
+                    </div>
+                </div>
+
+                <!-- Online Payment Section -->
+                <div v-if="registrationData.paymentMethod === 'online'">
+                    <h3>You will be redirected to the online payment platform later</h3>
+                </div>
+
+                <!-- FPS Payment Section -->
+                <div v-if="registrationData.paymentMethod === 'fps'">
+                    <h3>FPS Payment</h3>
+                    <p>Please transfer ${{ event.eventPrice }} to Tel:{{ content.fpsPaymentNumber }}</p>
+                    <div class="form-group">
+                        <label for="fpsPaymentPhoto">Upload Payment Screenshot:</label>
+                        <input type="file" id="fpsPaymentPhoto" 
+    @change="handleFileChange" 
+    accept="image/*" required />
+ </div>
+                </div>
                 <div class="form-group">
                     <div class="terms" ref="termsContent" @scroll="checkScroll"
                         style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
@@ -180,7 +290,12 @@ onMounted(() => {
                     <label for="understand" class="custom-checkbox-label">I have read and understand the terms of
                         agreement.</label>
                 </div>
-                <button type="submit">Register</button>
+                <div v-if="registrationData.paymentMethod === 'online'">
+                    <button type="submit" :disabled="isLoading">Register and Pay Online</button>
+                </div>
+                <div v-else>
+                    <button type="submit">Register</button>
+                </div>
             </form>
         </div>
         <div v-if="isAdmin">
@@ -236,3 +351,5 @@ onMounted(() => {
     background-color: #0056b3;
 }
 </style>
+
+

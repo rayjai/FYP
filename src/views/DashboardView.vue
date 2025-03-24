@@ -12,6 +12,10 @@
                 <a href="#" @click.prevent="item.action">
                     <span class="icon">
                         <i :class='item.icon'></i>
+                        <ul class="dropdown-menu dropdown-menu-start" aria-labelledby="dropdownMenuLink">
+            <li><a class="dropdown-item" href="/profile">Profile</a></li>
+            <li><a class="dropdown-item" @click="logout">Logout</a></li>
+          </ul>
                     </span>
                     <span class="title">{{ item.title }}</span>
                 </a>
@@ -602,6 +606,7 @@
                     <button @click="ContentSetting = 'about'">About Us</button>
                     <button @click="ContentSetting = 'others'">Finance Categories</button>
                     <button @click="ContentSetting = 'inventory_categories'">Inventory Categories</button>
+                    <button @click="ContentSetting = 'icon_bg'">Others</button>
                 </div>
 
                 <div class="settings-content">
@@ -628,6 +633,7 @@ import PrivacySettings from '@/views/PrivacySettings.vue';
 import HomeSettings from '@/views/HomeSettings.vue';
 import AboutUsSettings from '@/views/AboutUsSettings.vue';
 import OthersSettings from '@/views/OthersSettings.vue';
+import IconBg from '@/views/IconSettings.vue';
 import InventoryCategory from '@/views/InventoryCategory.vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
@@ -792,22 +798,9 @@ function toggleMenu() {
     isActive.value = !isActive.value;
 }
 
-
-const currentSetting = ref('profile'); // Default setting to show
 const ContentSetting = ref('home')
 
-const currentSettingComponent = computed(() => {
-    switch (currentSetting.value) {
-        case 'profile':
-            return ProfileSettings;
-        case 'notification':
-            return NotificationSettings;
-        case 'privacy':
-            return PrivacySettings;
-        default:
-            return ProfileSettings; // Fallback
-    }
-});
+
 const ContentComponent = computed(() => {
     switch (ContentSetting.value) {
         case 'home':
@@ -819,6 +812,8 @@ const ContentComponent = computed(() => {
 
         case 'inventory_categories':
             return InventoryCategory;
+        case 'icon_bg':
+            return IconBg;
         default:
             return HomeSettings; // Fallback
     }

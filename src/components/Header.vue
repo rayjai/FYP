@@ -65,9 +65,25 @@ const setActiveClass = () => {
   });
 };
 
+
+const content = ref([]);
+const clubId = ref('6755de91eb5ae88eaeaf53e3');
+
+async function fetchHomeContent() {
+  try {
+    const response = await fetch('/api/club/detail/'+ clubId.value);
+    const data = await response.json();
+    content.value = data;
+  } catch (error) {
+    console.error('Error fetching home events:', error);
+  }
+};
+
+
 onMounted(async () => {
   await loadAsyncData();
   await checkrole();
+  await fetchHomeContent();
   await nextTick(); // Wait for the DOM to update
   setActiveClass();
 });
@@ -86,7 +102,7 @@ onMounted(async () => {
   <div v-if="isAdmin">
     <nav class="navbar navbar-expand-lg fixed-top">
       <div class="container-fluid">
-        <a class="navbar-brand me-auto" href="/"><img src="/src/assets/desktop-regular.png"
+        <a class="navbar-brand me-auto" href="/"><img :src="'http://localhost:3000/uploads/' + content.webIcon"
             style="height: 30px; width: 30px;"></a>
         <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
           <div class="offcanvas-header">
@@ -95,7 +111,7 @@ onMounted(async () => {
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
           </div>
           <div class="offcanvas-body">
-            <ul class="navbar-nav justify-content-center flex-grow-1 pe-3">
+            <ul class="navbar-nav justify-content-center flex-grow-1 custom-padding-left">
               <li class="nav-item">
                 <a class="nav-link mx-lg-2" aria-current="page" href="/home">Home</a>
               </li>
@@ -108,9 +124,7 @@ onMounted(async () => {
               <li class="nav-item">
                 <a class="nav-link mx-lg-2" href="/about">About</a>
               </li>
-              <li class="nav-item">
-                <a class="nav-link mx-lg-2" href="/gallery">Gallery</a>
-              </li>
+              
               <li class="nav-item">
                 <a class="nav-link mx-lg-2" href="/dashboard">Management</a>
               </li>
@@ -162,7 +176,7 @@ onMounted(async () => {
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
           </div>
           <div class="offcanvas-body">
-            <ul id="navbar" class="navbar-nav justify-content-center flex-grow-1 pe-3">
+            <ul id="navbar" class="navbar-nav justify-content-center flex-grow-1 custom-padding-left">
               <li class="nav-item">
                 <a class="nav-link mx-lg-2" aria-current="page" href="/home">Home</a>
               </li>
@@ -175,9 +189,7 @@ onMounted(async () => {
               <li class="nav-item">
                 <a class="nav-link mx-lg-2" href="/about">About</a>
               </li>
-              <li class="nav-item">
-                <a class="nav-link mx-lg-2" href="/gallery">Gallery</a>
-              </li>
+              
              
             </ul>
           </div>
@@ -230,7 +242,7 @@ onMounted(async () => {
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
           </div>
           <div class="offcanvas-body">
-            <ul id="navbar" class="navbar-nav justify-content-center flex-grow-1 pe-3">
+            <ul id="navbar" class="navbar-nav justify-content-center flex-grow-1 custom-padding-left">
               <li class="nav-item">
                 <a class="nav-link mx-lg-2" aria-current="page" href="/home">Home</a>
               </li>
@@ -241,7 +253,7 @@ onMounted(async () => {
                 <a class="nav-link mx-lg-2" href="/about">About</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link mx-lg-2" href="/gallery">Gallery</a>
+                <a class="nav-link mx-lg-2" href="/forum">Forum</a>
               </li>
             </ul>
           </div>
@@ -280,5 +292,8 @@ export default {
   width: 100px;
   white-space: nowrap;
   /* Prevent text wrapping */
+}
+.custom-padding-left {
+  padding-left: 6rem !important;/* Set padding-left to 6rem */
 }
 </style>

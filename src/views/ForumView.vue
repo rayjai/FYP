@@ -252,7 +252,7 @@ if (message) {
     <Header />
     <div style="height: 80px;"></div>
 
-    <div class="forum-container">
+    <div v-if="isAdmin||isStudent" class="forum-container">
         <div style="display: flex;">
             <h1>Forum</h1>
                 <div style="margin-left: auto;">

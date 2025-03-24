@@ -31,7 +31,6 @@ async function fetchHomeContent() {
     const response = await fetch('/api/club/detail/'+ clubId.value);
     const data = await response.json();
     content.value = data;
-    console.log('Home Events:', content.value);
   } catch (error) {
     console.error('Error fetching home events:', error);
   }
@@ -43,12 +42,13 @@ onMounted(() => {
 });
 
 </script>
+
 <template>
   <Header />
   <div style="height: 80px;"></div>
 
   <div class="aboutbg">
-    <img src="/src/assets/student_club_about.png" class="card-img-top">
+    <img :src="'http://localhost:3000/uploads/' + content.aboutImage" class="card-img-top" alt="About Us Image">
     <h1 class="overlay-title">About Us</h1>
   </div>
   <div class="about">
@@ -56,9 +56,7 @@ onMounted(() => {
     <p>{{ content.philosophy }}</p>
   </div>
   <div class="aboutlogo">
-    <img src="/src/assets/desktop-regular.png" class="card-img-top">
-<p>{{ content.logomeaning }}</p>
-
+    <img :src="'http://localhost:3000/uploads/' + content.logoImage" class="card-img-top" alt="Logo Image">
+    <p>{{ content.logomeaning }}</p>
   </div>
-
 </template>

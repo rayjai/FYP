@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref,onMounted } from 'vue';
 import { reactive } from 'vue';
 import { useRouter } from 'vue-router';  //useRoute
 import '@/assets/css/signin.css';
@@ -47,9 +47,28 @@ const register = async () => {
         alert('Error submitting syllabus. Please try again.');
     }
 }
+
+const content = ref([]);
+const clubId = ref('6755de91eb5ae88eaeaf53e3');
+
+async function fetchHomeContent() {
+  try {
+    const response = await fetch('/api/club/detail/'+ clubId.value);
+    const data = await response.json();
+    content.value = data;
+  } catch (error) {
+    console.error('Error fetching home events:', error);
+  }
+};
+onMounted(() => {
+    fetchHomeContent(); // Fetch the content when the component is mounted
+});
+
 </script>
 
 <template>
+    <div :style="{ backgroundImage: `url(http://localhost:3000/uploads/${content.backgroundImage})`, backgroundSize: 'cover', backgroundRepeat: 'no-repeat', display: 'flex', height: '100vh', width: '100vw',justifyContent: 'center', alignItems: 'center' }">
+
     <main>
 
         <form @submit.prevent="register">
@@ -61,7 +80,8 @@ const register = async () => {
                     <a href="/signin"><i class='bx bx-arrow-back'></i></a>
                 </div>
 
-                <h1>Register</h1>
+                <h2 class="system-title">Student Club System</h2>
+                <h3>Register</h3>
 
                 <div class="labelGroup">
                     Name(in English)
@@ -135,6 +155,7 @@ const register = async () => {
             </div>
         </form>
     </main>
+    </div>
 </template>
 <script>
 import Datepicker from 'vue3-datepicker';

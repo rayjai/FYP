@@ -13,7 +13,7 @@
                 </div>
             </div>
             <div class="form-group">
-                <label for="poster1">Poster 1:</label>
+                <label for="poster1">Update Poster 1:</label>
                 <input type="file" id="poster1" accept=".pdf, .png, .jpg" @change="event => handleFileChange(event, 1)" />
             </div>
             <div class="form-group">
@@ -23,7 +23,7 @@
                 </div>
             </div>
             <div class="form-group">
-                <label for="poster2">Poster 2:</label>
+                <label for="poster2">Update Poster 2:</label>
                 <input type="file" id="poster2" accept=".pdf, .png, .jpg" @change="event => handleFileChange(event, 2)" />
             </div>
             <div class="form-group">
@@ -33,7 +33,7 @@
                 </div>
             </div>
             <div class="form-group">
-                <label for="poster3">Poster 3:</label>
+                <label for="poster3">Update Poster 3:</label>
                 <input type="file" id="poster3" accept=".pdf, .png, .jpg" @change="event => handleFileChange(event, 3)" />
             </div>
             <button type="submit">Save</button>
@@ -127,13 +127,14 @@ const handleSubmit = async () => { // Declare as async
     if (poster3.value) formData.append('eventPoster3', poster3.value);
 
     try {
-        const response = await axios.put(`/api/editclub/${clubId}`, formData, {
+        const response = await axios.put(`/api/editclubhome/${clubId}`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data'
             }
         });
-        console.log(response.data);
         if (response.status === 200) {
+            localStorage.setItem('toastrMessage', 'Content update Successfully!');
+            const message = localStorage.getItem('toastrMessage');
             window.location.href = '/dashboard';
         }
     } catch (error) {

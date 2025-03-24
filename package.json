@@ -16,6 +16,7 @@
     "@fullcalendar/timegrid": "^6.1.15",
     "@fullcalendar/vue3": "^6.1.15",
     "@primevue/themes": "^4.2.5",
+    "@stripe/stripe-js": "^6.1.0",
     "@vuepic/vue-datepicker": "^9.0.3",
     "ag-grid-community": "^33.1.1",
     "ag-grid-vue3": "^33.1.1",

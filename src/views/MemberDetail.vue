@@ -132,7 +132,8 @@ const fetchAdmins = async () => {
       studentid.value = record.value.student_id;
       editedRecord.value = { 
         ...record.value,
-        gender: record.value.gender
+        gender: record.value.gender,
+        access: record.value.access
       }; // Initialize editedRecord with formatted dates
     } catch (error) {
       console.error('Error fetching record details:', error);
@@ -222,6 +223,7 @@ const filterRecords = () => {
     try {
       await axios.put(`/api/member/detail/${record.value._id}`, editedRecord.value); // Update the record on the server
       record.value = { ...editedRecord.value }; // Update the local record
+      console.log(editedRecord);
     } catch (error) {
       console.error('Error updating record:', error);
     }

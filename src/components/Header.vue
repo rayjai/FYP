@@ -44,6 +44,31 @@ const loadAsyncData = async () => {
   }
 };
 
+const notifications = ref([]);
+
+async function fetchNotifications() {
+  try {
+    const response = await fetch('/api/notifications'); // Adjust the endpoint as necessary
+    const data = await response.json();
+    notifications.value = data; // Assuming the response is an array of notifications
+  } catch (error) {
+    console.error('Error fetching notifications:', error);
+  }
+}
+
+const selectedNotification = ref(null);
+const showNotificationDialog = ref(false);
+const openNotificationDialog = (notification) => {
+  selectedNotification.value = notification; // Set the selected notification
+  showNotificationDialog.value = true; // Open the dialog
+};
+
+const closeNotificationDialog = () => {
+  showNotificationDialog.value = false; // Close the dialog
+  selectedNotification.value = null; // Clear selected notification
+};
+
+
 const toggleModal = () => {
   showModal.value = true; // Open modal
 };
@@ -62,6 +87,16 @@ const setActiveClass = () => {
     } else {
       link.classList.remove('active');
     }
+  });
+};
+
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
   });
 };
 
@@ -84,6 +119,7 @@ onMounted(async () => {
   await loadAsyncData();
   await checkrole();
   await fetchHomeContent();
+  await fetchNotifications(); // Fetch notifications
   await nextTick(); // Wait for the DOM to update
   setActiveClass();
 });
@@ -151,17 +187,24 @@ onMounted(async () => {
         </button>
       </div>
       <div v-if="showModal" class="notification-modal">
-                <div class="notification-content">
-                  <span class="close-button" @click="closeModal">&times;</span>
-                  <h2 style="margin-bottom: 20px;">Notifications</h2>
-                  <div class="notification-item">Richard Jones has purchased a blue t-shirt for $79.00</div>
-                  <div class="notification-item">Your request for withdrawal of $2500.00 has been initiated.</div>
-                  <div class="notification-item">Keyser Wick has purchased a black jacket for $59.00</div>
-                  <div class="notification-item">Jane Davis has posted a new questions about your product.</div>
-                  <div class="notification-item">Your revenue has increased by 25%.</div>
-                  <div class="notification-item">12 users have added your products to their wishlist.</div>
-                </div>
-              </div>
+  <div class="notification-content">
+    <span class="close-button" @click="closeModal">&times;</span>
+    <h2 style="margin-bottom: 20px;">Notifications</h2>
+    <div v-for="(notification, index) in notifications" :key="index" class="notification-item" @click="openNotificationDialog(notification)">
+      {{ notification.title }} <!-- Display the title -->
+    </div>
+  </div>
+</div>
+<div v-if="showNotificationDialog" class="notification-dialog">
+  <div class="dialog-content">
+    <span class="close-button" @click="closeNotificationDialog">&times;</span>
+    <h2>{{ selectedNotification?.title }}</h2>
+    <p>{{ selectedNotification?.message }}</p>
+    <small style="color: grey;">{{ formatDate(selectedNotification?.createdAt) }}</small>
+  </div>
+</div>
+
+
     </nav>
   </div>
   <div v-else-if="isStudent">
@@ -296,4 +339,32 @@ export default {
 .custom-padding-left {
   padding-left: 6rem !important;/* Set padding-left to 6rem */
 }
+
+.notification-dialog {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.dialog-content {
+  background: white;
+  padding: 20px;
+  border-radius: 5px;
+  max-width: 500px;
+  width: 90%;
+}
+
+.close-button {
+  cursor: pointer;
+  float: right;
+  font-size: 20px;
+}
+
 </style>

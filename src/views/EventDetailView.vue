@@ -32,6 +32,9 @@
                     <a :href="'/eventregister/' + event._id" class="btn btn-primary" @click.stop>Register</a>
                 </div>
                 <a @click.stop="confirmDelete(event._id)" class="btn btn-danger">Delete</a>
+
+                <button @click.stop="stopRegistration(event._id)" class="btn btn-warning" v-if="event.canRegister">Stop Registration</button>
+                <button @click.stop="resumeRegistration(event._id)" class="btn btn-success" v-if="!event.canRegister">Resume Registration</button>
             </div>
             <div class="profile-info" style="padding-top: 20px;">
                 <h4>Registered Members</h4>
@@ -90,6 +93,7 @@ const route = useRoute();
 const events = ref([]);
 const registeredEvents = ref(new Set());
 const transformedEvents = ref([]);
+const registrationCount = ref(0);
 
 const memberColumnDefs = [
     { headerName: "Student ID", field: "student_id", sortable: true, filter: true },
@@ -159,8 +163,28 @@ async function fetchRegisteredEvents() {
             attendance: student.attendance !== undefined ? (student.attendance ? 'Present' : 'Absent') : 'N/A',
             paymentMethod: student.paymentMethod !== undefined ? student.paymentMethod : 'Free',
         }));
+     
     } catch (error) {
         errorMessage.value = 'Error fetching registered events: ' + error.message;
+    }
+}
+async function fetchRegistrationCount() {
+    const eventId = route.params.id;
+    try {
+        const response = await fetch(`/api/admincheckregistrations/${eventId}/count`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        registrationCount.value =  data.totalRegistrations; // Returns the count (number)
+        console.log(registrationCount.value);
+    } catch (error) {
+        console.error('Error fetching registration count:', error);
+        // Handle error (show message, return 0, etc.)
+        errorMessage.value = 'Failed to load registration count: ' + error.message;
+        return 0; // Fallback value
     }
 }
 
@@ -208,6 +232,28 @@ const confirmDelete = (eventId) => {
     }
 };
 
+const stopRegistration = async (eventId) => {
+    try {
+        await axios.patch(`/api/event/${eventId}/canRegister`, { canRegister: false });
+        alert('Registration has been stopped successfully.');
+        // Optionally, you can refresh event details or navigate to a different page
+        fetchEventDetails(); // Refresh the event details
+    } catch (error) {
+        errorMessage.value = 'Error stopping registration: ' + error.message;
+    }
+};
+
+
+const resumeRegistration = async (eventId) => {
+    try {
+        await axios.patch(`/api/event/${eventId}/canRegister`, { canRegister: true });
+        alert('Registration has been resumed successfully.');
+        fetchEventDetails(); // Refresh the event details
+    } catch (error) {
+        errorMessage.value = 'Error resuming registration: ' + error.message;
+    }
+};
+
 const deleteEvent = async (eventId) => {
     try {
         await axios.delete(`/api/event/${eventId}`);
@@ -239,6 +285,7 @@ onMounted(() => {
     checkrole();
     fetchEventDetails();
     fetchRegisteredEvents();
+    fetchRegistrationCount();
 });
 </script>
 

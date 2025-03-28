@@ -151,7 +151,7 @@ const handleSubmit = () => {
     formData.append('clubName', clubName.value);
     formData.append('description', description.value);
     formData.append('philosophy', philosophy.value);
-    formData.append('logomeaning', logoMeaning.value);
+    formData.append('logoMeaning', logoMeaning.value);
     if (poster1.value) formData.append('poster1', poster1.value);
     if (poster2.value) formData.append('poster2', poster2.value);
     if (poster3.value) formData.append('poster3', poster3.value);

@@ -57,6 +57,6 @@ onMounted(() => {
   </div>
   <div class="aboutlogo">
     <img :src="'http://localhost:3000/uploads/' + content.logoImage" class="card-img-top" alt="Logo Image">
-    <p>{{ content.logomeaning }}</p>
+    <p>{{ content.logoMeaning }}</p>
   </div>
 </template>

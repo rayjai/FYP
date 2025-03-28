@@ -5,6 +5,7 @@ import { jwtDecode } from "jwt-decode";
 import '@/assets/css/event.css'
 import { useRouter, useRoute } from 'vue-router';
 import axios from 'axios';
+
 const router = useRouter();
 const route = useRoute();
 
@@ -15,25 +16,29 @@ const inieventid = ref(route.params.id);
 const eventDateFrom = ref();
 const eventName = ref();
 const sectionNumber = ref();
-const stripe = ref(null); // Stripe instance
+const stripe = ref(null);
 const eventType = ref();
+const totalmaxRegistration = ref();
 const eventPrice = ref();
-const uniqueKey = ref(null); // Unique key for tracking submission
+const uniqueKey = ref(null);
+const fpsPaymentPhoto = ref(null);
+const isLoading = ref(false);
+const registrationCount = ref(0);
+const canRegister = ref(true);
 
-const fpsPaymentPhoto = ref(null); // To store the uploaded photo for FPS payment
 
 
+// Enhanced registration data structure
 let registrationData = ref({
     student_id: '',
-    selectedSession: '0',
-    multipleSection:'0',
+    selectedSection: null, // Changed from selectedSession to selectedSection
     event_id: inieventid,
-    attendance:false,
-    eventName:eventName,
-    eventFromDate:eventDateFrom.value,
-    paymentMethod:'',
+    attendance: false,
+    eventName: eventName,
+    eventFromDate: eventDateFrom.value,
+    paymentMethod: '',
+    sectionDetails: null // For storing section-specific data
 });
-
 
 const checkrole = async () => {
     if (localStorage.getItem('token')) {
@@ -50,72 +55,102 @@ const checkrole = async () => {
 }
 
 const event = ref({
-   
+    sections: [] // Ensure sections array exists
 });
 const termsAgreed = ref(false);
 const termsContent = ref(null);
 
+
 async function fetchEventDetails() {
     const eventId = route.params.id;
-    registrationData.event_id = route.params.id;
+    registrationData.value.event_id = eventId;
     try {
-        const response = await fetch('/api/event/detail/' + eventId
-            , { method: 'GET' });
+        const response = await fetch('/api/event/detail/' + eventId, { method: 'GET' });
         if (!response.ok) throw new Error('Network response was not ok');
         event.value = await response.json();
         sectionNumber.value = Number(event.value.sectionNumber);
         eventDateFrom.value = event.value.eventDateFrom;
         eventName.value = event.value.eventName;
         eventType.value = event.value.eventType;
-        eventPrice.value = event.value.eventPrice; // Add this line in fetchEventDetails
+        eventPrice.value = event.value.eventPrice;
+        totalmaxRegistration.value = event.value.totalmaxRegistration;
+        canRegister.value = event.value.canRegister;
 
+
+       // Initialize section selection if sections exist
+       if (event.value.sections && event.value.sections.length > 0) {
+            registrationData.value.sectionDetails = event.value.sections;
+        }
     } catch (error) {
         console.error('Error fetching event details:', error);
     }
-};
+}
+
+
+
 const checkScroll = () => {
     const { scrollTop, scrollHeight, clientHeight } = termsContent.value;
     termsAgreed.value = scrollTop + clientHeight >= scrollHeight;
 };
-const isLoading = ref(false);
+
+async function fetchRegistrationCount() {
+    const eventId = route.params.id;
+    try {
+        const response = await fetch(`/api/admincheckregistrations/${eventId}/count`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        registrationCount.value =  data.totalRegistrations; // Returns the count (number)
+    } catch (error) {
+        console.error('Error fetching registration count:', error);
+        // Handle error (show message, return 0, etc.)
+        errorMessage.value = 'Failed to load registration count: ' + error.message;
+        return 0; // Fallback value
+    }
+}
 
 const handleCheckout = async () => {
     isLoading.value = true;
     uniqueKey.value = Date.now() + Math.random(); 
 
-    // Collect all necessary data for registration
-    registrationData.value.event_id = inieventid.value; // Ensure this is set correctly
-    registrationData.value.eventName = eventName.value; // Set event name
-    registrationData.value.eventDateFrom = eventDateFrom.value; // Set event date from
+    registrationData.value.event_id = inieventid.value;
+    registrationData.value.eventName = eventName.value;
+    registrationData.value.eventDateFrom = eventDateFrom.value;
+
+    // Include section details in the checkout data if available
+    const checkoutData = {
+        eventName: registrationData.value.eventName,
+        eventPrice: eventPrice.value * 100,
+        registrationData: {
+            ...registrationData.value,
+            selectedSection: registrationData.value.selectedSection
+        },
+        uniqueKey: uniqueKey.value,
+    };
 
     const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-            eventName: registrationData.value.eventName,
-            eventPrice: eventPrice.value * 100,
-            registrationData: registrationData.value,
-            uniqueKey: uniqueKey.value,
-        }),
+        body: JSON.stringify(checkoutData),
     });
 
     const session = await response.json();
     if (session.url) {
-        window.location.href = session.url; // Redirect to Stripe Checkout
+        window.location.href = session.url;
     } else {
         console.error('Error creating session:', session.message || 'No message returned');
     }
     isLoading.value = false;
 };
 
-
 const handleFileChange = (event) => {
     fpsPaymentPhoto.value = event.target.files[0];
-    console.log('FPS payment photo:', fpsPaymentPhoto.value); // Debugging line
 };
-
 
 const handleSubmit = async () => {
     registrationData.value.eventName = eventName.value;
@@ -123,30 +158,42 @@ const handleSubmit = async () => {
 
     const formData = new FormData();
     
-    // Append all necessary fields from registrationData
+    // Basic registration data
     formData.append('student_id', registrationData.value.student_id);
-    formData.append('selectedSession', registrationData.value.selectedSession);
-    formData.append('multipleSection', registrationData.value.multipleSection); // Include multipleSection
     formData.append('event_id', registrationData.value.event_id);
-    formData.append('attendance', registrationData.value.attendance); // Include attendance
-    formData.append('eventName', registrationData.value.eventName); // Include eventName
-    formData.append('eventDateFrom', registrationData.value.eventDateFrom); // Include eventFromDate
+    formData.append('attendance', registrationData.value.attendance);
+    formData.append('eventName', registrationData.value.eventName);
+    formData.append('eventDateFrom', registrationData.value.eventDateFrom);
     formData.append('paymentMethod', registrationData.value.paymentMethod);
     
-    // Check if the payment method is FPS and if a photo is uploaded
-    if (registrationData.value.paymentMethod === 'fps' && fpsPaymentPhoto.value) {
-        formData.append('fpsPaymentPhoto', fpsPaymentPhoto.value); // Append the uploaded photo
+    // Section-specific data
+    if (registrationData.value.selectedSection !== null) {
+        formData.append('selectedSection', registrationData.value.selectedSection);
+        
+        // Include section details if available
+        if (registrationData.value.sectionDetails) {
+            const selectedSection = registrationData.value.sectionDetails.find(
+                section => section.name === registrationData.value.selectedSection
+            );
+            if (selectedSection) {
+                formData.append('sectionName', selectedSection.name);
+                formData.append('sectionMaxRegistration', selectedSection.maxRegistration);
+            }
+        }
     }
-console.log(formData);
+
+    // Payment data
+    if (registrationData.value.paymentMethod === 'fps' && fpsPaymentPhoto.value) {
+        formData.append('fpsPaymentPhoto', fpsPaymentPhoto.value);
+    }
+
     if (registrationData.value.paymentMethod === 'online') {
-        // Call handleCheckout instead of submitting the form
         await handleCheckout();
     } else {
-        // Regular form submission logic
         try {
             const response = await fetch('/api/eventregister', {
                 method: 'POST',
-                body: formData, // No need for headers; FormData sets the correct Content-Type
+                body: formData,
             });
 
             if (!response.ok) {
@@ -163,27 +210,30 @@ console.log(formData);
         }
     }
 };
+const isEventFull = computed(() => {
+    return totalmaxRegistration.value - registrationCount.value <= 0;
+});
+
 
 const content = ref([]);
 const clubId = ref('6755de91eb5ae88eaeaf53e3');
 
 async function fetchHomeContent() {
-  try {
-    const response = await fetch('/api/club/detail/'+ clubId.value);
-    const data = await response.json();
-    content.value = data;
-  } catch (error) {
-    console.error('Error fetching home events:', error);
-  }
+    try {
+        const response = await fetch('/api/club/detail/' + clubId.value);
+        const data = await response.json();
+        content.value = data;
+    } catch (error) {
+        console.error('Error fetching home events:', error);
+    }
 };
-
 
 onMounted(() => {
     checkrole();
     fetchEventDetails();
     fetchHomeContent();
-})
-
+    fetchRegistrationCount();
+});
 </script>
 
 <template>
@@ -206,126 +256,104 @@ onMounted(() => {
         </p>
         <p><strong>Time: </strong> {{ event.eventTimeStart }} - {{ event.eventTimeEnd }}</p>
         <p><strong>Price: </strong>
-            <span v-if='event.eventType === "free"'>
-                -
-            </span>
-            <span v-else>
-                {{ event.eventPrice }}
-            </span>
+            <span v-if='event.eventType === "free"'>-</span>
+            <span v-else>{{ event.eventPrice }}</span>
         </p>
         <p><strong>Venue: </strong> {{ event.eventVenue }} </p>
-
-
     </div>
-    <div class="register-info">
 
-        <div v-if="isStudent">
+    <div class="register-info">
+        <div v-if="isStudent || isAdmin">
             <h2>Register Event</h2>
             <form id="register-event" @submit.prevent="handleSubmit">
                 <div class="form-group">
-                    <label for="event-name">Student id:</label>
-                    <input type="text" id="student_id" v-model="registrationData.student_id" placeholder="12345678"
-                        required>
+                    <label for="event-name">Student ID:</label>
+                    <input type="text" id="student_id" v-model="registrationData.student_id" placeholder="12345678" required>
                 </div>
-                <div v-if="event.sectionNumber != 0">
-                    <div class="form-group">
-                        <label>Select Session:</label>
-                        <div style="display: flex; flex-direction: column;">
-                    <div v-for="index in sectionNumber" :key="index">
-                        <div class="radio-select">
-                            <input type="radio" :id="'session-' + index" :value="index" v-model="registrationData.selectedSession" />
-                            <label :for="'session-' + index" style="padding-left: 10px;">Session {{ index }}</label>
-                        </div>
-                    </div>
-                </div>
-                    </div>
-                </div>
-                <div v-else><input type="radio" value="0" v-model="registrationData.multipleSection" hidden /></div>
-                
 
-                   <!-- Payment Method Selection -->
+                <!-- Section Selection -->
+                <div v-if="event.sections && event.sections.length > 0">
+    <div class="form-group">
+        <label>Select Section:</label>
+        <div style="display: flex; flex-direction: column;">
+            <div v-for="(section, index) in event.sections" :key="index">
+                <div class="radio-select">
+                    <input 
+                        type="radio" 
+                        :id="'section-' + index" 
+                        :value="section.name" 
+                        v-model="registrationData.selectedSection"
+                    />
+                    <label :for="'section-' + index" style="padding-left: 10px;">
+                        {{ section.name }} 
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+                <!-- Payment Method Selection -->
                 <div v-if="event.eventType === 'charged'">
-                   <div class="form-group">
-                    <label for="payment-method">Payment Method:</label>
-                    <select id="payment-method" v-model="registrationData.paymentMethod" required>
-                        <option value="" disabled>Select a payment method</option>
-                        <option value="online">Online Payment</option>
-                        <option value="fps">FPS Payment</option>
-                        <option value="cash">Cash</option>
-                    </select>
+                    <div class="form-group">
+                        <label for="payment-method">Payment Method:</label>
+                        <select id="payment-method" v-model="registrationData.paymentMethod" required>
+                            <option value="" disabled>Select a payment method</option>
+                            <option value="online">Online Payment</option>
+                            <option value="fps">FPS Payment</option>
+                            <option value="cash">Cash</option>
+                        </select>
                     </div>
                 </div>
 
-                <!-- Online Payment Section -->
+                <!-- Payment Method Specific Sections -->
                 <div v-if="registrationData.paymentMethod === 'online'">
-                    <h3>You will be redirected to the online payment platform later</h3>
+                    <p>You will be redirected to the online payment platform later</p>
                 </div>
 
-                <!-- FPS Payment Section -->
                 <div v-if="registrationData.paymentMethod === 'fps'">
                     <h3>FPS Payment</h3>
                     <p>Please transfer ${{ event.eventPrice }} to Tel:{{ content.fpsPaymentNumber }}</p>
                     <div class="form-group">
                         <label for="fpsPaymentPhoto">Upload Payment Screenshot:</label>
                         <input type="file" id="fpsPaymentPhoto" 
-    @change="handleFileChange" 
-    accept="image/*" required />
- </div>
+                            @change="handleFileChange" 
+                            accept="image/*" required />
+                    </div>
                 </div>
+
+                <!-- Terms and Conditions -->
                 <div class="form-group">
                     <div class="terms" ref="termsContent" @scroll="checkScroll"
                         style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
                         <h3>Terms of Agreement</h3>
                         <p>Your terms of agreement content goes here...</p>
-                        <p>1. Member should attend the event.</p>
-                        <p>xxx...</p>
-                        <p>xxx...</p>
-                        <p>xxx...</p>
-                        <p>xxx...</p>
-                        <p>xxx...</p>
-                        <p>xxx...</p>
-                        <p>xxx...</p>
                     </div>
                     <input type="checkbox" id="understand" required />
-                    <label for="understand" class="custom-checkbox-label">I have read and understand the terms of
-                        agreement.</label>
+                    <label for="understand" class="custom-checkbox-label">
+                        I have read and understand the terms of agreement.
+                    </label>
                 </div>
+
+                <!-- Submit Button -->
                 <div v-if="registrationData.paymentMethod === 'online'">
-                    <button type="submit" :disabled="isLoading">Register and Pay Online</button>
+                    <button type="submit" :disabled="isLoading">
+                        {{ isLoading ? 'Processing...' : 'Register and Pay Online' }}
+                    </button>
                 </div>
                 <div v-else>
-                    <button type="submit">Register</button>
-                </div>
-            </form>
+                    <button type="submit" :disabled="isLoading || isEventFull || !canRegister">
+                        {{ isLoading ? 'Processing...' : 'Register' }}
+                    </button>
+                    <div v-if="isEventFull" style="color: red; margin-top: 10px;">
+            The event is full. You cannot register at this time.
         </div>
-        <div v-if="isAdmin">
-            <h2>Register Event</h2>
-            <form id="register-event" @submit.prevent="handleSubmit">
-                <div class="form-group">
-                    <label for="event-name">Student id:</label>
-                    <input type="text" id="student_id" v-model="registrationData.student_id" placeholder="12345678"
-                        required>
                 </div>
-                <div v-if="event.sectionNumber != 0">
-                    <div class="form-group">
-                        <label>Select Session:</label>
-                        <div style="display: flex; flex-direction: column;">
-                    <div v-for="index in sectionNumber" :key="index">
-                        <div class="radio-select">
-                            <input type="radio" :id="'session-' + index" :value="index" v-model="registrationData.selectedSession" />
-                            <label :for="'session-' + index" style="padding-left: 10px;">Session {{ index }}</label>
-                        </div>
-                    </div>
-                </div>
-                    </div>
-                </div>
-                <div v-else><input type="radio" value="0" v-model="registrationData.multipleSection" hidden /></div>
-                <button type="submit">Register</button>
             </form>
         </div>
     </div>
 </template>
-
 
 <style scoped>
 .event-detail {
@@ -337,19 +365,39 @@ onMounted(() => {
     height: auto;
 }
 
-.back-link {
-    display: inline-block;
-    margin-top: 20px;
+.register-info {
+    padding: 20px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.radio-select {
+    margin: 5px 0;
+    display: flex;
+    align-items: center;
+}
+
+button {
     padding: 10px 15px;
     background-color: #007bff;
     color: white;
-    text-decoration: none;
+    border: none;
     border-radius: 5px;
+    cursor: pointer;
 }
 
-.back-link:hover {
+button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+button:hover:not(:disabled) {
     background-color: #0056b3;
 }
+
+.custom-checkbox-label {
+    margin-left: 5px;
+}
 </style>
-
-

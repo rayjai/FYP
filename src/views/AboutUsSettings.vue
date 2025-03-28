@@ -4,11 +4,11 @@
         <form @submit.prevent="handleSubmit">
             <div class="form-group">
                 <label for="philosophy">Philosophy</label>
-                <input type="text" id="philosophy" v-model="club.philosophy" />
+                <textarea id="philosophy" v-model="club.philosophy" rows="4"></textarea>
             </div>
             <div class="form-group">
                 <label for="logomeaning">Logo Meaning</label>
-                <input type="text" id="logomeaning" v-model="club.logomeaning" />
+                <textarea id="logomeaning" v-model="club.logoMeaning" rows="4"></textarea>
             </div>
             <div class="form-group">
                 <label>Current About Us Image</label>
@@ -42,7 +42,7 @@ import axios from 'axios';
 
 const club = ref({
     philosophy: '',
-    logomeaning: '',
+    logoMeaning: '',
     aboutImage: '',
     logoImage: ''
 });
@@ -75,7 +75,7 @@ const handleSubmit = async () => {
     const formData = new FormData();
 
     formData.append('philosophy', club.value.philosophy);
-    formData.append('logomeaning', club.value.logomeaning);
+    formData.append('logoMeaning', club.value.logoMeaning);
 
     // Append the files to the FormData if they exist
     if (aboutImageFile.value) formData.append('aboutImage', aboutImageFile.value);

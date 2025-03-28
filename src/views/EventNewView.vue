@@ -101,13 +101,20 @@ onMounted(() => {
                         </div>
                         <div class="form-group">
                             <label for="event-poster">Event Poster:</label>
-                            <input type="file" id="eventPoster" accept=".pdf, .png, .jpg" @change="handleFileChange" />
+                            <input type="file" id="eventPoster" accept=".pdf, .png, .jpg,.jpeg" @change="handleFileChange" />
+                            <small class="file-hint">Accepted formats: PDF, PNG, JPG (Max 5MB)</small>
+
                         </div>
                         <div class="form-group">
                             <label for="event-description">Event Description:</label>
                             <textarea id="event-description" v-model="eventDescription"
                                 placeholder="Enter event description"></textarea>
                         </div>
+                        <div class="form-group">
+    <label for="max-registration">Maximum Number of Registrations:</label>
+    <input type="number" id="max-registration" v-model="totalmaxRegistration" placeholder="Enter max registrations">
+</div>
+
                         <div class="form-group">
                             <label for="multiple-section">Multiple Section?</label>
                             <select id="multiple-section" v-model="multipleSection">
@@ -116,11 +123,23 @@ onMounted(() => {
                             </select>
                         </div>
                         <div class="form-group" v-if="multipleSection === 'yes'">
-                            <label for="section-select">Select Number of Sections:</label>
-                            <select v-model="sectionNumber" id="section-select">
-                                <option v-for="num in 19" :key="num + 1" :value="num + 1">{{ num + 1 }}</option>
-                            </select>
-                        </div>
+    <label for="section-select">Select Number of Sections:</label>
+    <select v-model="sectionNumber" id="section-select" @change="updateSections">
+        <option v-for="num in 19" :key="num + 1" :value="num + 1">{{ num + 1 }}</option>
+    </select>
+</div>
+
+<div v-for="(section, index) in sections" :key="index" class="section-details">
+    <div class="form-group">
+        <label :for="'section-name-' + index">Name of Section {{ index + 1 }}:</label>
+        <input type="text" :id="'section-name-' + index" v-model="section.name" placeholder="Enter section name">
+    </div>
+    <div class="form-group">
+        <label :for="'max-registration-' + index">Maximum Number of Registrations for Section {{ index + 1 }}:</label>
+        <input type="number" :id="'max-registration-' + index" v-model.number="section.maxRegistration" placeholder="Enter max registrations">
+    </div>
+</div>
+
                         
 
                         <button type="submit">Create Event</button>
@@ -137,27 +156,75 @@ import axios from 'axios';
 
 export default {
     data() {
-        return {
-            eventType: 'free',
-            eventPrice: 0,
-            eventPoster: null,
-            eventName: '',
-            eventDateFrom: '',
-            eventDateTo: '',
-            eventTimeStart: '',
-            eventTimeEnd: '',
-            eventDescription: '',
-            eventVenue: '',
-            multipleSection: 'no',
-            sectionNumber: '0', // Default value
-        }
-    },
+    return {
+        eventType: 'free',
+        eventPrice: 0,
+        eventPoster: null,
+        eventName: '',
+        eventDateFrom: '',
+        eventDateTo: '',
+        eventTimeStart: '',
+        eventTimeEnd: '',
+        eventDescription: '',
+        eventVenue: '',
+        multipleSection: 'no',
+        totalmaxRegistration:null,
+        sectionNumber: '0', // Default value
+        sections: [] // Array to hold section details
+    }
+},
+
     
     methods: {
         handleFileChange(event) {
-            this.eventPoster = event.target.files[0];
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // Validate file type
+            const validTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+            if (!validTypes.includes(file.type)) {
+                alert('Please upload a PDF, JPG, or PNG file');
+                event.target.value = '';
+                return;
+            }
+            
+            // Validate file size (5MB max)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('File size must be less than 5MB');
+                event.target.value = '';
+                return;
+            }
+            
+            this.eventPoster = file;
+        },
+        updateSections() {
+            const currentLength = this.sections.length;
+            const newLength = parseInt(this.sectionNumber);
+            
+            if (newLength > currentLength) {
+                // Add new sections
+                for (let i = currentLength; i < newLength; i++) {
+                    this.sections.push({ name: '', maxRegistration: null });
+                }
+            } else if (newLength < currentLength) {
+                // Remove extra sections
+                this.sections = this.sections.slice(0, newLength);
+            }
+        },
+    validateMaxRegistration() {
+            if (this.multipleSection === 'yes') {
+                const totalMaxRegistration = this.sections.reduce((sum, section) => sum + (section.maxRegistration || 0), 0);
+                if (totalMaxRegistration !== this.totalmaxRegistration) {
+                    alert(`Total maximum registrations for sections (${totalMaxRegistration}) must equal the overall maximum registrations (${this.totalmaxRegistration}).`);
+                    return false;
+                }
+            }
+            return true;
         },
         handleSubmit() {
+            if (!this.validateMaxRegistration()) {
+                return;
+            }
             const dateFrom = new Date(this.eventDateFrom);
     const dateTo = new Date(this.eventDateTo);
     const timeStart = this.eventTimeStart.split(':');
@@ -198,9 +265,11 @@ export default {
             formData.append('eventPrice', this.eventType === 'charged' ? this.eventPrice : 0);
             formData.append('eventDescription', this.eventDescription);
             formData.append('multipleSection', this.multipleSection);
+            formData.append('totalmaxRegistration', this.totalmaxRegistration);
             formData.append('sectionNumber', this.multipleSection === 'yes' ? this.sectionNumber : 0);
             formData.append('eventPoster', this.eventPoster);
 
+         formData.append('sections', JSON.stringify(this.sections));
 
             axios.post('/api/eventnew', formData, {
                 headers: {
@@ -210,6 +279,7 @@ export default {
                 .then((response) => {
                     console.log(response.data);
                     if (response.status === 201) {
+                        localStorage.setItem('toastrMessage', 'Event created Successfully!');
                         window.location.href = '/event';
                     }
                 })

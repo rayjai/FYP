@@ -307,7 +307,7 @@
     <div v-if="IncomeRecord">
         <div>
     <label for="month">Month:</label>
-    <select id="filterincomemonth">
+    <select id="filterincomemonth" v-model="selectedIncomeMonth">
         <option value="1">January</option>
         <option value="2">February</option>
         <option value="3">March</option>
@@ -323,18 +323,19 @@
     </select>
 
     <label for="year" style="margin-left: 20px;">Year:</label>
-    <input type="number" id="filterincomeyear" value="2025" min="2000" max="2100">
+    <input type="number" id="filterincomeyear" v-model="selectedIncomeYear" min="2000" max="2100">
 
     <button @click="fetchIncomeRecordsByDate" style="margin-left: 20px;">Apply Filter</button>
 </div>
 <div class="chart-container">    
+    <h3>{{ incomeChartTitle }}</h3>
     <canvas id="incomeChart" style="height: 400px; width: 100%;"></canvas>
     </div>
     </div>
     <div v-if="ExpenditureRecord">
         <div>
     <label for="month">Month:</label>
-    <select id="filterexpendituremonth">
+    <select id="filterexpendituremonth" v-model="selectedExpenditureMonth">
         <option value="1">January</option>
         <option value="2">February</option>
         <option value="3">March</option>
@@ -350,11 +351,12 @@
     </select>
 
     <label for="year" style="margin-left: 20px;">Year:</label>
-    <input type="number" id="filterexpenditureyear" value="2025" min="2000" max="2100">
+    <input type="number" id="filterexpenditureyear" v-model="selectedExpenditureYear" min="2000" max="2100">
 
     <button @click="fetchExpenditureRecordsByDate" style="margin-left: 20px;">Apply Filter</button>
 </div>
-<div class="chart-container">    
+<div class="chart-container">  
+    <h3>{{ expenditureChartTitle }}</h3>
     <canvas id="expenditureChart" style="height: 400px; width: 100%;"></canvas>
     </div>
     </div>
@@ -463,6 +465,13 @@
             
             <div class="holder">
                 <h2>Members</h2>
+
+                <div class="action-buttons">
+    <button class="btn btn-expenditure" @click="openNotificationModal">
+        <i class='bx bx-bell'></i> Create Notification
+    </button>
+</div>
+
                 <ag-grid-vue
             class="ag-theme-alpine"
             style="width: 100%; height: 500px;"
@@ -473,6 +482,26 @@
             :defaultColDef="defaultColDef"
             @rowClicked="onRowClickedMember">
         </ag-grid-vue>
+
+        <div id="notificationModal" class="modal">
+    <div class="modal-content">
+        <span class="close" @click="closeNotificationModal">&times;</span>
+        <h2>Create Notification</h2>
+        
+        <form @submit.prevent="saveNotification">
+            <div class="form-group">
+                <label for="notificationTitle">Title *</label>
+                <input type="text" id="notificationTitle" v-model="notification.title" required>
+            </div>
+            <div class="form-group">
+                <label for="notificationMessage">Message *</label>
+                <textarea id="notificationMessage" v-model="notification.message" required></textarea>
+            </div>
+            <button type="submit">Save Notification</button>
+        </form>
+    </div>
+</div>
+
             </div>
         </div>
     </div>
@@ -1179,6 +1208,7 @@ async function renderIncomeChart() {
                     beginAtZero: true
                 }
             },
+        
             plugins: {
                 title: {
                     display: true,
@@ -1191,6 +1221,34 @@ async function renderIncomeChart() {
         }
     });
 }
+
+
+const selectedIncomeMonth = ref(new Date().getMonth() + 1);
+const selectedIncomeYear = ref(new Date().getFullYear());
+const selectedExpenditureMonth = ref(new Date().getMonth() + 1);
+const selectedExpenditureYear = ref(new Date().getFullYear());
+
+// Month names array
+const monthNames = ["January", "February", "March", "April", "May", "June",
+                  "July", "August", "September", "October", "November", "December"];
+
+// Computed chart titles
+const incomeChartTitle = computed(() => {
+  return `Income Chart - ${monthNames[selectedIncomeMonth.value - 1]} ${selectedIncomeYear.value}`;
+});
+
+const expenditureChartTitle = computed(() => {
+  return `Expenditure Chart - ${monthNames[selectedExpenditureMonth.value - 1]} ${selectedExpenditureYear.value}`;
+});
+
+const incomeRecordsTitle = computed(() => {
+  return `Income Records - ${monthNames[selectedIncomeMonth.value - 1]} ${selectedIncomeYear.value}`;
+});
+
+const expenditureRecordsTitle = computed(() => {
+  return `Expenditure Records - ${monthNames[selectedExpenditureMonth.value - 1]} ${selectedExpenditureYear.value}`;
+});
+
 async function renderFilterIncomeChart(month,year) {
     await deleteFilterIncomeChart(); // Delete any existing chart
 
@@ -1852,6 +1910,47 @@ const createPDF = async (dateFrom, dateTo) => {
 };
 
 
+
+const notification = ref({
+    title: '',
+    message: ''
+});
+
+const openNotificationModal = () => {
+    document.getElementById('notificationModal').style.display = 'block';
+};
+
+const closeNotificationModal = () => {
+    document.getElementById('notificationModal').style.display = 'none';
+    notification.value.title = '';
+    notification.value.message = '';
+};
+
+const saveNotification = async () => {
+    try {
+        const response = await fetch('/api/notifications', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(notification.value),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to save notification');
+        }
+
+        const result = await response.json();
+        localStorage.setItem('toastrMessage', 'Notification Sent Successfully!');
+        closeNotificationModal(); // Close the modal after saving
+        router.push('/management');
+    } catch (error) {
+        console.error('Error saving notification:', error);
+        alert('Failed to create notification');
+    }
+};
+
+
 </script>
 
 <script>
@@ -2137,7 +2236,8 @@ hr {
 }
 .chart-container {
     width: 100%; /* Full width */
-    height:500px;
+    height:600px;
+    padding-bottom: 100px;
 }
 #expenditureChart{
     width: 100%; /* Full width */

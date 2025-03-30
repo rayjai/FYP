@@ -22,6 +22,8 @@
             <span v-else>$ {{ event.eventPrice }}</span>
         </p>
         <p><strong>Venue: </strong> {{ event.eventVenue }} </p>
+        <p><strong>Registration Deadline: </strong> {{ event.deadline }} </p>
+
 
         <div v-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
 
@@ -38,6 +40,13 @@
             </div>
             <div class="profile-info" style="padding-top: 20px;">
                 <h4>Registered Members</h4>
+                <div class="form-group">
+                <label for="category">Select Category for Payment Confirmation *</label>
+                <select id="category" v-model="chooseCategory" required>
+                    <option v-for="category in categories" :key="category._id" :value="category.category">{{ category.code + ' - ' + category.category }}</option>
+                </select>
+                <p v-if="categoryWarning" class="text-danger">{{ categoryWarning }}</p>
+            </div>
                 <ag-grid-vue
                     class="ag-theme-alpine"
                     style="width: 100%; height: 500px;"
@@ -54,10 +63,10 @@
             <div class="button-container">
                 <div v-if="isEventRegistered(event._id)">
                     <span class="registered">Already Registered</span>
-                    <button @click.stop="cancelRegistration(event._id)" class="btn btn-danger" style="margin-left: 20px;">Cancel Registration</button>
+                    <button v-if="new Date(event.deadline) > new Date()" @click.stop="cancelRegistration(event._id)" class="btn btn-danger" style="margin-left: 20px;">Cancel Registration</button>
                 </div>
                 <div v-else>
-                    <div v-if="new Date(event.eventDateFrom) > new Date()">
+                    <div v-if="new Date(event.deadline) > new Date()">
                         <a :href="'/eventregister/' + event._id" class="btn btn-primary" @click.stop>Register</a>
                     </div>
                 </div>
@@ -65,7 +74,7 @@
         </div>
         <div v-else>
             <div class="button-container">
-                <div v-if="new Date(event.eventDateFrom) > new Date()">
+                <div v-if="new Date(event.deadline) > new Date()">
                     <a :href="'/signup'" class="btn btn-primary" @click.stop>Register</a>
                 </div>
             </div>
@@ -81,6 +90,10 @@ import { AgGridVue } from "ag-grid-vue3"; // Import ag-grid-vue
 import '@/assets/css/event.css'
 import axios from 'axios';
 import { useRoute, useRouter } from 'vue-router';
+import toastr from 'toastr';
+import '@/assets/css/style.css'
+
+
 
 const router = useRouter();
 const student_id = ref("");
@@ -94,6 +107,20 @@ const events = ref([]);
 const registeredEvents = ref(new Set());
 const transformedEvents = ref([]);
 const registrationCount = ref(0);
+const username = ref("");
+
+const loadAsyncData = async () => {
+  try {
+    // Get the token from local storage    
+    const token = localStorage.getItem('token');
+
+
+    const decoded = jwtDecode(token);
+    username.value = `${decoded.user.english_name} `;
+  } catch (error) {
+    console.log(error);
+  }
+};
 
 const memberColumnDefs = [
     { headerName: "Student ID", field: "student_id", sortable: true, filter: true },
@@ -105,17 +132,29 @@ const memberColumnDefs = [
         filter: true 
     },
     { 
+        headerName: "Payment Status", 
+        field: "confirm", 
+        sortable: true, 
+        filter: true,
+        valueGetter: params => params.data.confirm ? "Confirmed" : "Not Confirmed" // Convert boolean to string
+    },
+    { 
         headerName: "", 
-        cellRenderer: params => `<button class="confirm-button">Confirm</button>`, 
+        cellRenderer: params => `<button class="confirm-button btn btn-success" ${params.data.confirm ? 'disabled' : ''}>Confirm</button>`, 
         sortable: false, 
         filter: false 
     },
     { 
         headerName: "", 
-        cellRenderer: params => `<button class="delete-button">Delete</button>`, 
+        cellRenderer: params => `<button class="delete-button btn btn-danger">Delete</button>`, 
         sortable: false, 
         filter: false 
     },
+    { 
+        headerName: "ID", // You can give it a name, but it won't be shown
+        field: "_id", 
+        hide: true // This will hide the column from the grid
+    }
 ];
 
 const defaultColDef = {
@@ -162,6 +201,9 @@ async function fetchRegisteredEvents() {
             event_id: student.event_id,
             attendance: student.attendance !== undefined ? (student.attendance ? 'Present' : 'Absent') : 'N/A',
             paymentMethod: student.paymentMethod !== undefined ? student.paymentMethod : 'Free',
+            confirm: student.confirm != undefined ? student.confirm : 'N/A',
+            _id: student._id // Ensure this is included
+
         }));
      
     } catch (error) {
@@ -210,7 +252,7 @@ const cancelRegistration = async (eventId) => {
     try {
         await axios.delete(`/api/registrations/${student_id.value}/${eventId}`);
         registeredEvents.value.delete(eventId);
-        alert('Registration canceled successfully.');
+        localStorage.setItem('toastrMessage', 'Registration cancelled successfully!');
         fetchStudentRegisteredEvents();
     } catch (error) {
         errorMessage.value = 'Error canceling registration: ' + error.message;
@@ -219,7 +261,7 @@ const cancelRegistration = async (eventId) => {
 const deleteRegistration = async (eventId, studentId) => {
     try {
         await axios.delete(`/api/registrations/${studentId}/${eventId}`); // Pass both studentId and eventId
-        alert('Registration deleted successfully.');
+        localStorage.setItem('toastrMessage', 'Registration deleted successfully!');
         fetchRegisteredEvents(); // Refresh the grid data
     } catch (error) {
         errorMessage.value = 'Error deleting registration: ' + error.message;
@@ -235,7 +277,7 @@ const confirmDelete = (eventId) => {
 const stopRegistration = async (eventId) => {
     try {
         await axios.patch(`/api/event/${eventId}/canRegister`, { canRegister: false });
-        alert('Registration has been stopped successfully.');
+        localStorage.setItem('toastrMessage', 'Registration has been stopped successfully.');
         // Optionally, you can refresh event details or navigate to a different page
         fetchEventDetails(); // Refresh the event details
     } catch (error) {
@@ -247,7 +289,7 @@ const stopRegistration = async (eventId) => {
 const resumeRegistration = async (eventId) => {
     try {
         await axios.patch(`/api/event/${eventId}/canRegister`, { canRegister: true });
-        alert('Registration has been resumed successfully.');
+        localStorage.setItem('toastrMessage', 'Registration has been resumed successfully.');
         fetchEventDetails(); // Refresh the event details
     } catch (error) {
         errorMessage.value = 'Error resuming registration: ' + error.message;
@@ -263,11 +305,24 @@ const deleteEvent = async (eventId) => {
     }
 };
 
-const onRowClickedMember = (event) => {
+const student_id_full = ref("");
+const user_data = ref([]);
+const fetchStudentIdFull = async (student_id) => {
+    try {
+        const response = await axios.get('/api/user/detail/'+ student_id); // Adjust the endpoint as necessary
+        user_data.value = response.data; // Assuming the response contains an array of categories
+        console.log(response.data);
+        student_id_full.value= user_data.value._id;
+    } catch (error) {
+        console.error('Error fetching categories:', error);
+    }
+};
+const onRowClickedMember = async (event) => {
     // Check if the target is a button with a specific class
     if (event.event.target.classList.contains('confirm-button')) {
         event.event.stopPropagation(); // Prevent row click propagation
-        const id = event.data.event_id; // Get the event ID from the row data
+        const id = event.data; // Get the event ID from the row data
+        console.log(id);
         confirmRegistration(id); // Call the confirm function
     } else if (event.event.target.classList.contains('delete-button')) {
         event.event.stopPropagation(); // Prevent row click propagation
@@ -276,16 +331,119 @@ const onRowClickedMember = (event) => {
         deleteRegistration(eventId, studentId); // Call the delete function
     } else {
         const recordId = event.data.student_id; // Get the student ID from the row data
-        router.push(`/memberdetail/${recordId}`); // Navigate to the member detail page
+        await fetchStudentIdFull(recordId); // Wait for the fetch to complete
+        router.push(`/memberdetail/${student_id_full.value}`); // Navigate to the member detail page
     }
 };
 
+const categoryWarning = ref(""); // Step 1: Warning message for category selection
+
+
+const chooseCategory =ref("");
+const feeItems = ref([{ feeItem: 'Event', itemName: event.value.eventName, quantity: 1, unitPrice: event.value.eventPrice, discount: 0, amount: event.value.eventPrice }]);
+
+const confirmRegistration = async (thisrecord) => {
+    if (!chooseCategory.value) {
+        categoryWarning.value = "Please select a category before confirming."; // Set the warning message
+        return; // Exit the function if no category is selected
+    } else {
+        categoryWarning.value = ""; // Clear the warning if a category is selected
+    }
+
+    // Get the current date
+    const currentDate = new Date().toISOString(); // Format as ISO string
+    const unitPrice = parseFloat(event.value.eventPrice);
+    const feeItems = ref([{ feeItem: 'Event', itemName: event.value.eventName, quantity: 1, unitPrice: unitPrice, discount: 0, amount: unitPrice }]);
+
+    const recordData = {
+        title: event.value.eventName,
+        date: event.value.eventDateFrom,
+        category: chooseCategory.value, // Ensure chooseCategory is defined in your script
+        personInCharge: username.value,
+        feeItems: feeItems.value, // Ensure feeItems is defined in your script
+        remarks: '',
+        createReceipt: true,
+        issueDate: currentDate,
+        billTo: thisrecord.student_id, // Use the student_id from the clicked row
+        totalAmount: unitPrice,
+    };
+
+    try {
+        const response = await fetch('/api/income', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(recordData),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to save income record');
+        }
+
+        const result = await response.json();
+        // Before redirecting
+        localStorage.setItem('toastrMessage', 'Payment Confirmed and Income record added successfully!');
+        await updateRegistrationStatus(thisrecord._id, true);
+        fetchRegisteredEvents(); // Refresh the registered events
+
+    } catch (error) {
+        console.error('Error saving income record:', error);
+        // Optionally, show an error message to the user
+    }
+};
+
+const updateRegistrationStatus = async (Id, confirmValue) => {
+    try {
+        const response = await fetch(`/api/registerEvents/${Id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ confirm: confirmValue }), // Update the confirm value
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to update registration status');
+        }
+
+        const result = await response.json();
+        console.log('Registration status updated successfully:', result);
+    } catch (error) {
+        console.error('Error updating registration status:', error);
+    }
+};
+
+// On the dashboard page
+function displayToastrMessage() {
+    const message = localStorage.getItem('toastrMessage');
+    if (message) {
+        toastr.success(message);
+        localStorage.removeItem('toastrMessage'); // Clear the message after displaying
+    }
+}
+
+// Call the function every second (1000 milliseconds)
+setInterval(displayToastrMessage, 1000);
+
+const categories = ref([]); 
+// Fetch categories from the database
+const fetchCategories = async () => {
+    try {
+        const response = await axios.get('/api/finance_category'); // Adjust the endpoint as necessary
+        categories.value = response.data; // Assuming the response contains an array of categories
+    } catch (error) {
+        console.error('Error fetching categories:', error);
+    }
+};
 
 onMounted(() => {
     checkrole();
+    loadAsyncData();
     fetchEventDetails();
     fetchRegisteredEvents();
     fetchRegistrationCount();
+    fetchCategories();
 });
 </script>
 
@@ -302,4 +460,5 @@ onMounted(() => {
 .alert {
     margin-top: 20px;
 }
+
 </style>

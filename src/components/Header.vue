@@ -259,17 +259,23 @@ onMounted(async () => {
         </button>
       </div>
       <div v-if="showModal" class="notification-modal">
-                <div class="notification-content">
-                  <span class="close-button" @click="closeModal">&times;</span>
-                  <h2 style="margin-bottom: 20px;">Notifications</h2>
-                  <div class="notification-item">Richard Jones has purchased a blue t-shirt for $79.00</div>
-                  <div class="notification-item">Your request for withdrawal of $2500.00 has been initiated.</div>
-                  <div class="notification-item">Keyser Wick has purchased a black jacket for $59.00</div>
-                  <div class="notification-item">Jane Davis has posted a new questions about your product.</div>
-                  <div class="notification-item">Your revenue has increased by 25%.</div>
-                  <div class="notification-item">12 users have added your products to their wishlist.</div>
-                </div>
-              </div>
+  <div class="notification-content">
+    <span class="close-button" @click="closeModal">&times;</span>
+    <h2 style="margin-bottom: 20px;">Notifications</h2>
+    <div v-for="(notification, index) in notifications" :key="index" class="notification-item" @click="openNotificationDialog(notification)">
+      {{ notification.title }} <!-- Display the title -->
+    </div>
+  </div>
+</div>
+<div v-if="showNotificationDialog" class="notification-dialog">
+  <div class="dialog-content">
+    <span class="close-button" @click="closeNotificationDialog">&times;</span>
+    <h2>{{ selectedNotification?.title }}</h2>
+    <p>{{ selectedNotification?.message }}</p>
+    <small style="color: grey;">{{ formatDate(selectedNotification?.createdAt) }}</small>
+  </div>
+</div>
+
     </nav>
   </div>
 

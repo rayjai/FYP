@@ -46,6 +46,10 @@
                             <label for="venue">Venue:</label>
                             <input type="text" id="venue" v-model="event.eventVenue" required>
                         </div>
+                        <div class="form-group">
+                                <label for="event-date-from">Registration Deadline:</label>
+                                <input type="date" id="deadline" :min="minDate" v-model="event.deadline" required>
+                            </div>
 
                         <div class="form-group">
                             <label for="event-type">Event Type:</label>
@@ -144,6 +148,7 @@ const event = ref({
     eventTimeStart: '',
     eventTimeEnd: '',
     eventVenue: '',
+    deadline,
     eventType: 'free',
     eventPrice: 0,
     eventPoster: null,
@@ -297,6 +302,7 @@ const handleSubmit = async () => {
         formData.append('eventTimeStart', event.value.eventTimeStart);
         formData.append('eventTimeEnd', event.value.eventTimeEnd);
         formData.append('eventVenue', event.value.eventVenue);
+        formData.append('deadline', event.value.deadline);
         formData.append('eventType', event.value.eventType);
         formData.append('eventPrice', event.value.eventType === 'charged' ? event.value.eventPrice : 0);
         formData.append('eventDescription', event.value.eventDescription);

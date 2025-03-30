@@ -10,6 +10,7 @@ let registrationData = ref({
     english_name: '',
     student_id: '',
     email: '',
+    phoneNo:'',
     password: '',
     gender: '',
     role:'student',
@@ -111,6 +112,15 @@ onMounted(() => {
                         <i class='bx bx-envelope'></i>
                     </div>
                    
+                </div>
+                <div class="labelGroup">
+                    Phone Number
+                    <div class="typeboxsignup">
+                        <input type="phonenumber" placeholder="12345678" v-model="registrationData.phoneNo">
+                        <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+                        </link>
+                        <i class='bx bx-phone'></i>
+                    </div>
                 </div>
                 <div class="labelGroup">
                     Password

@@ -175,6 +175,16 @@ const router = createRouter({
       name: 'Cancel',
       component: () => import('../views/cancel.vue'),
     },
+    {
+      path: '/inventory/detail/:id',
+      name: 'InventoryDetail',
+      component: () => import('../views/InventoryDetail.vue'),
+    },
+    {
+      path: '/reset-password/:id',
+      name: 'Resetpassword',
+      component: () => import('../views/ResetPassword.vue'),
+    },
   ]
 });
 

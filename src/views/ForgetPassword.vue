@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import axios from 'axios'; // Make sure to install axios if you haven't already
 import '@/assets/css/signin.css';
 
@@ -30,9 +30,26 @@ const reset = async () => {
         loading.value = false; // Set loading to false when the request ends
     }
 };
+const content = ref([]);
+const clubId = ref('6755de91eb5ae88eaeaf53e3');
+
+async function fetchHomeContent() {
+  try {
+    const response = await fetch('/api/club/detail/'+ clubId.value);
+    const data = await response.json();
+    content.value = data;
+  } catch (error) {
+    console.error('Error fetching home events:', error);
+  }
+};
+onMounted(() => {
+    fetchHomeContent(); // Fetch the content when the component is mounted
+});
 </script>
 
 <template>
+    <div :style="{ backgroundImage: `url(http://localhost:3000/uploads/${content.backgroundImage})`, backgroundSize: 'cover', backgroundRepeat: 'no-repeat', display: 'flex', height: '100vh', width: '100vw',justifyContent: 'center', alignItems: 'center' }">
+
     <main>
         <form @submit.prevent="reset">
             <div class="wrapper">
@@ -60,6 +77,7 @@ const reset = async () => {
             </div>
         </form>
     </main>
+    </div>
 </template>
 
 <style scoped>

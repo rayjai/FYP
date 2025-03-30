@@ -55,19 +55,19 @@ onMounted(() => {
                     <form @submit.prevent="handleSubmit">
                         <div class="form-group">
                             <label for="event-name">Event Name:</label>
-                            <input type="text" id="event-name" v-model="eventName" placeholder="Enter event name">
+                            <input type="text" id="event-name" v-model="eventName" placeholder="Enter event name" required>
                         </div>
                         <div class="grid2x1">
                             <div class="form-group">
 
                                 <label for="event-date">Event Date:(From)</label>
                                 <input type="date" id="event-date-from" :min="minDate" v-model="eventDateFrom"
-                                    placeholder="Enter event date">
+                                    placeholder="Enter event date" required>
                             </div>
                             <div class="form-group">
                                 <label for="event-date">Event Date:(To)</label>
                                 <input type="date" id="event-date-to" :min="eventDateFrom" v-model="eventDateTo"
-                                    placeholder="Enter event date">
+                                    placeholder="Enter event date" required>
                             </div>
                         </div>
 
@@ -75,56 +75,62 @@ onMounted(() => {
                             <div class="form-group">
                                 <label for="event-time">Event Time:(Start)</label>
                                 <input type="time" id="event-time-start"  v-model="eventTimeStart"
-                                    placeholder="Enter event time">
+                                    placeholder="Enter event time" required>
                             </div>
                             <div class="form-group">
                                 <label for="event-time">Event Time:(End)</label>
                                 <input type="time" id="event-time-end" :min="eventTimeStart" v-model="eventTimeEnd"
-                                    placeholder="Enter event time">
+                                    placeholder="Enter event time" required>
                             </div>
                         </div>
                         <div class="form-group">
                             <label for="event-venue">Venue:</label>
-                            <input type="text" id="venue" v-model="eventVenue" placeholder="Enter event venue">
+                            <input type="text" id="venue" v-model="eventVenue" placeholder="Enter event venue" required>
                         </div>
+                        <div class="form-group">
+
+<label for="event-date">Registration Deadline</label>
+<input type="date" id="deadline" :min="minDate" v-model="deadline"
+    placeholder="Enter registration deadline" required>
+</div>
 
                         <div class="form-group">
                             <label for="event-type">Event Type:</label>
-                            <select id="event-type" v-model="eventType">
+                            <select id="event-type" v-model="eventType" required>
                                 <option value="free">Free</option>
                                 <option value="charged">Charged</option>
                             </select>
                         </div>
                         <div class="form-group" v-if="eventType === 'charged'">
                             <label for="event-price">Event Price:</label>
-                            <input type="number" id="event-price" placeholder="Enter event price" v-model="eventPrice">
+                            <input type="number" id="event-price" placeholder="Enter event price" v-model="eventPrice" required>
                         </div>
                         <div class="form-group">
                             <label for="event-poster">Event Poster:</label>
-                            <input type="file" id="eventPoster" accept=".pdf, .png, .jpg,.jpeg" @change="handleFileChange" />
+                            <input type="file" id="eventPoster" accept=".pdf, .png, .jpg,.jpeg" @change="handleFileChange" required/>
                             <small class="file-hint">Accepted formats: PDF, PNG, JPG (Max 5MB)</small>
 
                         </div>
                         <div class="form-group">
                             <label for="event-description">Event Description:</label>
                             <textarea id="event-description" v-model="eventDescription"
-                                placeholder="Enter event description"></textarea>
+                                placeholder="Enter event description" required></textarea>
                         </div>
                         <div class="form-group">
     <label for="max-registration">Maximum Number of Registrations:</label>
-    <input type="number" id="max-registration" v-model="totalmaxRegistration" placeholder="Enter max registrations">
+    <input type="number" id="max-registration" v-model="totalmaxRegistration" placeholder="Enter max registrations" required>
 </div>
 
                         <div class="form-group">
                             <label for="multiple-section">Multiple Section?</label>
-                            <select id="multiple-section" v-model="multipleSection">
+                            <select id="multiple-section" v-model="multipleSection" required>
                                 <option value="yes">Yes</option>
                                 <option value="no">No</option>
                             </select>
                         </div>
                         <div class="form-group" v-if="multipleSection === 'yes'">
     <label for="section-select">Select Number of Sections:</label>
-    <select v-model="sectionNumber" id="section-select" @change="updateSections">
+    <select v-model="sectionNumber" id="section-select" @change="updateSections" required>
         <option v-for="num in 19" :key="num + 1" :value="num + 1">{{ num + 1 }}</option>
     </select>
 </div>
@@ -132,11 +138,11 @@ onMounted(() => {
 <div v-for="(section, index) in sections" :key="index" class="section-details">
     <div class="form-group">
         <label :for="'section-name-' + index">Name of Section {{ index + 1 }}:</label>
-        <input type="text" :id="'section-name-' + index" v-model="section.name" placeholder="Enter section name">
+        <input type="text" :id="'section-name-' + index" v-model="section.name" placeholder="Enter section name" required>
     </div>
     <div class="form-group">
         <label :for="'max-registration-' + index">Maximum Number of Registrations for Section {{ index + 1 }}:</label>
-        <input type="number" :id="'max-registration-' + index" v-model.number="section.maxRegistration" placeholder="Enter max registrations">
+        <input type="number" :id="'max-registration-' + index" v-model.number="section.maxRegistration" placeholder="Enter max registrations" required>
     </div>
 </div>
 
@@ -167,6 +173,7 @@ export default {
         eventTimeEnd: '',
         eventDescription: '',
         eventVenue: '',
+        deadline:'',
         multipleSection: 'no',
         totalmaxRegistration:null,
         sectionNumber: '0', // Default value
@@ -268,6 +275,8 @@ export default {
             formData.append('totalmaxRegistration', this.totalmaxRegistration);
             formData.append('sectionNumber', this.multipleSection === 'yes' ? this.sectionNumber : 0);
             formData.append('eventPoster', this.eventPoster);
+            formData.append('deadline', this.deadline);
+
 
          formData.append('sections', JSON.stringify(this.sections));
 

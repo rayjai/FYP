@@ -2,6 +2,8 @@
 import { ref, onMounted } from 'vue';
 import { reactive } from 'vue';
 import '@/assets/css/signin.css';
+import toastr from 'toastr';
+import 'toastr/build/toastr.min.css'; 
 
 const credentials = ref({
     email: '',
@@ -48,7 +50,16 @@ const login = async () => {
         errorMessage.value = error.message; // Set the error message
     }
 }
+function displayToastrMessage() {
+    const message = localStorage.getItem('toastrMessage');
+    if (message) {
+        toastr.success(message);
+        localStorage.removeItem('toastrMessage'); // Clear the message after displaying
+    }
+}
 
+// Call the function every second (1000 milliseconds)
+setInterval(displayToastrMessage, 1000);
 
 const content = ref([]);
 const clubId = ref('6755de91eb5ae88eaeaf53e3');

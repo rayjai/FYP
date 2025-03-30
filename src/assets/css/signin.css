@@ -6,19 +6,35 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
+    overflow: hidden; /* Prevent body from scrolling */
+
 }
 
 
 .wrapper {
     width: 420px;
     background: transparent;
+    max-height: 70vh; /* Set a maximum height */
+    overflow-y: auto; /* Enable vertical scrolling */
     border: 2px solid rgba(255,255,255,0.2);
-    backdrop-filter: blur(20px);
+    backdrop-filter: blur(100px);
     color: #fff;
     border-radius: 10px;
     padding: 30px 40px;
     position: relative;
     z-index: 1;
+}
+.wrapper::-webkit-scrollbar {
+    width: 8px; /* Width of the scrollbar */
+}
+
+.wrapper::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.5); /* Color of the scrollbar thumb */
+    border-radius: 10px; /* Rounded corners for the scrollbar */
+}
+
+.wrapper::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1); /* Background of the scrollbar track */
 }
 
 .wrapper h1 {

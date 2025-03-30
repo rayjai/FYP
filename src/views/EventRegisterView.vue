@@ -260,6 +260,8 @@ onMounted(() => {
             <span v-else>{{ event.eventPrice }}</span>
         </p>
         <p><strong>Venue: </strong> {{ event.eventVenue }} </p>
+        <p><strong>Registration Deadline: </strong> {{ event.deadline }} </p>
+
     </div>
 
     <div class="register-info">

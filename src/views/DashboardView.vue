@@ -98,7 +98,7 @@
             <div class="form-group">
                 <label for="category">Select Category *</label>
                 <select id="category" v-model="selectedExpenditureCategory" required>
-                    <option v-for="category in categories" :key="category._id" :value="category.category">{{ category.category }}</option>
+                    <option v-for="category in categories" :key="category._id" :value="category.category">{{ category.code + ' - ' + category.category }}</option>
                 </select>
             </div>
             <div class="form-group">
@@ -198,7 +198,7 @@
             <div class="form-group">
                 <label for="category">Select Category *</label>
                 <select id="category" v-model="selectedIncomeCategory">
-                    <option v-for="category in categories" :key="category._id" :value="category.category">{{ category.category }}</option>
+                    <option v-for="category in categories" :key="category._id" :value="category.category">{{ category.code + ' - ' + category.category }}</option>
                 </select>
             </div>
             <div class="form-group">
@@ -299,11 +299,39 @@
                 <h2>Transactions</h2>
     <!-- Add buttons positioned at the top right corner -->
     <div class="action-buttons" style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
-        <button class="btn btn-expenditure" @click="openFinancialReportModal">
+        <button class="btn btn-expenditure" @click="openFinancialReportModal" style="margin-right: 10px;">
             <i class='bx bx-dollar'></i> Generate Financial Report
         </button>
+        <button class="btn btn-expenditure" @click="toggleChatbot">
+        Chatbot
+        </button>
+
     </div>
-    
+    <div class="chatbot-container" :class="{ 'active': isChatbotVisible }">
+        <span class="close-chat" @click="toggleChatbot">&times;</span>
+
+        <div class="chatbot-container">
+    <div class="chatbot-header">
+      <h3>AI Chatbot</h3>
+    </div>
+    <div class="chatbot-messages" ref="messagesContainer">
+      <div v-for="message in messages" :key="message.id" :class="{'user-message': message.user, 'bot-message': !message.user}">
+        {{ message.text }}
+      </div>
+      <div v-if="loading" class="loading">Typing...</div> <!-- Loading indicator -->
+    </div>
+    <div class="preset-questions">
+      <button @click="sendPresetQuestion('What is the best categories?')">What is the best categories?</button>
+      <button @click="sendPresetQuestion('How to gain more income?')">How to gain more income?</button>
+    </div>
+    <div class="chatbot-input">
+      <input type="text" v-model="userInput" @keyup.enter="sendMessage" placeholder="Type your message..."/>
+      <button @click="sendMessage">Send</button>
+    </div>
+    <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div> <!-- Error message -->
+  </div>
+</div>
+
     <div v-if="IncomeRecord">
         <div>
     <label for="month">Month:</label>
@@ -384,7 +412,6 @@
             @rowClicked="onRowClickedIncome">
         </ag-grid-vue>
     </div>
-
     <div v-if="ExpenditureRecord">
         <h3>Expenditure Records</h3>
         <ag-grid-vue
@@ -437,15 +464,17 @@
     <select id="category" v-model="selectedCategory">
         <option value="">All Categories</option>
         <option v-for="category in categories" :key="category._id" :value="category.category">
-            {{ category.category }}
+            {{ category.code + ' - ' + category.category }}
         </option>
     </select>
 </div>
 
           <button type="submit">Generate Report</button>
         </form>
+        
     </div>
 </div>
+
 
     </div>
 
@@ -534,19 +563,19 @@
         <form id="InventoryForm" @submit.prevent="saveInventory">
             <div class="form-group">
         <label for="item-name">Item Name:</label>
-        <input type="text" id="item-name" name="item-name" required v-model="inventory_itemName">
+        <input type="text" id="item-name" name="item-name" required v-model="inventoryItem.name">
     </div>
 
     <div class="form-group">
         <label for="description">Description:</label>
-        <textarea id="description" name="description" rows="4" v-model="inventory_description"></textarea>
+        <textarea id="description" name="description" rows="4" v-model="inventoryItem.description"></textarea>
     </div>
     <div class="form-group">
         <label for="category">Select Category:</label>
-        <select id="category" v-model="inventory_selectedCategory">
+        <select id="category" v-model="inventoryItem.category">
             <option value="">All Categories</option>
             <option v-for="category in inventory_categories" :key="category._id" :value="category.category">
-                {{ category.category }}
+                {{ category.code + ' - ' +category.category  }}
             </option>
         </select>
     </div>
@@ -557,32 +586,32 @@
 
     <div class="form-group">
         <label for="quantity">Quantity:</label>
-        <input type="number" id="quantity" name="quantity" min="0" required v-model="inventory_quantity">
+        <input type="number" id="quantity" name="quantity" min="0" required v-model="inventoryItem.quantity">
     </div>
 
     <div class="form-group">
         <label for="purchase-date">Purchase Date:</label>
-        <input type="date" id="purchase-date" name="purchase-date" v-model="inventory_purchaseDate">
+        <input type="date" id="purchase-date" name="purchase-date" v-model="inventoryItem.purchaseDate">
     </div>
 
     <div class="form-group">
         <label for="purchase-price">Purchase Price:</label>
-        <input type="number" id="purchase-price" name="purchase-price" step="0.01" required v-model="inventory_purchasePrice">
+        <input type="number" id="purchase-price" name="purchase-price" step="0.01" required v-model="inventoryItem.purchasePrice">
     </div>
 
     <div class="form-group">
         <label for="current-value">Current Value:</label>
-        <input type="number" id="current-value" name="current-value" step="0.01" required v-model="inventory_currentValue">
+        <input type="number" id="current-value" name="current-value" step="0.01" required v-model="inventoryItem.currentValue">
     </div>
 
     <div class="form-group">
         <label for="location">Location:</label>
-        <input type="text" id="location" name="location" required v-model="inventory_location">
+        <input type="text" id="location" name="location" required v-model="inventoryItem.location">
     </div>
 
     <div class="form-group">
         <label for="condition">Condition:</label>
-        <select id="condition" name="condition" required v-model="inventory_condition">
+        <select id="condition" name="condition" required v-model="inventoryItem.condition">
             <option value="">Select Condition</option>
             <option value="new">New</option>
             <option value="good">Good</option>
@@ -594,7 +623,7 @@
 
     <div class="form-group">
         <label for="notes">Remarks:</label>
-        <textarea id="notes" name="notes" rows="3" v-model="inventory_remarks"></textarea>
+        <textarea id="notes" name="notes" rows="3" v-model="inventoryItem.remarks"></textarea>
     </div>
 
     <button type="submit">Add Inventory</button>
@@ -605,12 +634,12 @@
                 <ag-grid-vue
             class="ag-theme-alpine"
             style="width: 100%; height: 500px;"
-            :columnDefs="memberColumnDefs"
-            :rowData="membersData"
+            :columnDefs="inventoryColumnDefs"
+            :rowData="inventoryRecords"
             :pagination="true"
             :paginationPageSize="10"
             :defaultColDef="defaultColDef"
-            @rowClicked="onRowClickedMember">
+            @rowClicked="onRowClickedInventory">
         </ag-grid-vue>
             </div>
         </div>
@@ -676,6 +705,8 @@ import tippy from 'tippy.js';
 import 'tippy.js/dist/tippy.css'; 
 import toastr from 'toastr';
 import 'toastr/build/toastr.min.css'; 
+import Chatbot from '@/components/Chatbot.vue';
+
 
 
 // Register the scales and elements
@@ -856,7 +887,12 @@ const expenditureRecords = ref([]);
 const filteredExpenditureRecords = ref([]);
 const IncomeRecord = ref(true);
 const ExpenditureRecord = ref(false);
+const isChatbotVisible = ref(false);
 
+
+function toggleChatbot() {
+    isChatbotVisible.value = !isChatbotVisible.value;
+}
 
 const columnDefs = [
 {
@@ -921,6 +957,12 @@ function onRowClickedMember(event) {
         console.log(event.data);
         router.push(`/memberdetail/${recordId}`); // Navigate to the record page
     }
+}
+function onRowClickedInventory(event) {
+        const recordId = event.data._id; // Assuming your record has an '_id' field
+        console.log(event.data);
+        router.push(`/inventory/detail/${recordId}`); // Navigate to the record page
+    
 }
 
 
@@ -1539,6 +1581,86 @@ const fetchInventoryCategories = async () => {
 };
 const isLoading = ref(true); // Loading state
 
+
+const inventoryItem = ref({
+    name: '',
+    description: '',
+    category: '',
+    quantity: 0,
+    purchaseDate: '',
+    purchasePrice: 0,
+    currentValue: 0,
+    location: '',
+    condition: '',
+    remarks: '',
+});
+
+const resetInventoryForm = () => {
+    inventoryItem.value = {
+        name: '',
+        description: '',
+        category: '',
+        quantity: 0,
+        purchaseDate: '',
+        purchasePrice: 0,
+        currentValue: 0,
+        location: '',
+        condition: '',
+        remarks: '',
+    };
+};
+
+const saveInventory = async () => {
+    try {
+        const response = await fetch('/api/inventory', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(inventoryItem.value),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to add inventory item');
+        }
+
+        const result = await response.json();
+        localStorage.setItem('toastrMessage', 'Inventory record added successfully!');
+        
+        closeInventoryModal(); // Close modal after saving
+        await fetchInventoryItems(); // Refresh the inventory items list
+    } catch (error) {
+        console.error('Error saving inventory item:', error);
+        alert('Failed to add inventory item'); // Replace with Toastr or similar for better UX
+    }
+};
+
+const inventoryRecords = ref([]);
+const filteredInventoryRecords = ref([]);
+
+const fetchInventoryItems = async () => {
+    try {
+        const response = await axios.get('/api/inventory'); // Adjust the endpoint as necessary
+        inventoryRecords.value = response.data; // Assuming the response contains an array of records
+        filteredInventoryRecords.value = inventoryRecords.value; // Initialize filtered records
+    } catch (error) {
+        console.error('Error fetching inventory records:', error);
+    }
+};
+const inventoryColumnDefs = [
+{ 
+        headerName: "Date",
+        field: "purchaseDate",
+        sortable: true,
+        filter: true,
+        valueGetter: params => {
+            return formatDate(params.data.purchaseDate); // Format the date here
+        }
+    },       { headerName: "Name", field: "name", sortable: true, filter: true },
+      { headerName: "Quantity", field: "quantity", sortable: true, filter: true },
+      { headerName: "Condition", field: "condition", sortable: true, filter: true },
+    ];
+
 const fetchData = async () => {
     await Promise.all([
         fetchMembers(),
@@ -1553,7 +1675,8 @@ const fetchData = async () => {
         renderExpenditureChart(),
         fetchEvents(),
         fetchCategories(),
-        fetchInventoryCategories()
+        fetchInventoryCategories(),
+        fetchInventoryItems(),
     ]);
 };
 
@@ -1643,12 +1766,16 @@ window.location.href = '/dashboard';
 };
 
 // On the dashboard page
-const message = localStorage.getItem('toastrMessage');
-if (message) {
-    toastr.success(message);
-    localStorage.removeItem('toastrMessage'); // Clear the message after displaying
+function displayToastrMessage() {
+    const message = localStorage.getItem('toastrMessage');
+    if (message) {
+        toastr.success(message);
+        localStorage.removeItem('toastrMessage'); // Clear the message after displaying
+    }
 }
 
+// Call the function every second (1000 milliseconds)
+setInterval(displayToastrMessage, 1000);
 
 const EXtitle = ref('');
 const expenditureDate = ref('');
@@ -1948,6 +2075,85 @@ const saveNotification = async () => {
         console.error('Error saving notification:', error);
         alert('Failed to create notification');
     }
+};
+
+const messages = ref([]);
+const userInput = ref('');
+const loading = ref(false);
+const errorMessage = ref('');
+
+// Function to send message
+const sendMessage = async () => {
+  if (userInput.value.trim() === '') return; // Prevent sending empty messages
+
+  const userMessage = { id: Date.now(), text: userInput.value, user: true };
+  messages.value.push(userMessage); // Add user message to the chat
+  loading.value = true; // Set loading state to true
+  errorMessage.value = ''; // Clear any previous error message
+
+  const financeData = {
+    income: incomeRecords.value,
+    expenditure: expenditureRecords.value,
+  };
+  console.log(financeData);
+  try {
+    const response = await axios.post('/api/chat', {
+      message: userInput.value,
+      financeData: financeData,
+    });
+
+    const botMessage = { id: Date.now() + 1, text: response.data.reply || 'Sorry, I did not understand that.', user: false };
+    messages.value.push(botMessage); // Add bot reply to the chat
+  } catch (error) {
+    console.error('Error communicating with chatbot API:', error);
+    errorMessage.value = 'Failed to get a response from the AI. Please try again.'; // Set error message
+  } finally {
+    loading.value = false; // Reset loading state
+    scrollToBottom(); // Scroll to the bottom of the messages
+  }
+
+  userInput.value = ''; // Clear input field
+};
+
+
+const sendPresetQuestion = async (question) => {
+const userMessage = { id: Date.now(), text: question, user: true };
+  messages.value.push(userMessage); // Add user message to the chat
+  loading.value = true; // Set loading state to true
+  errorMessage.value = ''; // Clear any previous error message
+
+  const financeData = {
+    income: incomeRecords.value,
+    expenditure: expenditureRecords.value,
+  };
+  console.log(financeData);
+  try {
+    const response = await axios.post('/api/chat', {
+      message: question,
+      financeData: financeData,
+    });
+
+    const botMessage = { id: Date.now() + 1, text: response.data.reply || 'Sorry, I did not understand that.', user: false };
+    messages.value.push(botMessage); // Add bot reply to the chat
+  } catch (error) {
+    console.error('Error communicating with chatbot API:', error);
+    errorMessage.value = 'Failed to get a response from the AI. Please try again.'; // Set error message
+  } finally {
+    loading.value = false; // Reset loading state
+    scrollToBottom(); // Scroll to the bottom of the messages
+  }
+
+  userInput.value = ''; // Clear input field
+};
+
+// Function to scroll to the bottom of the messages
+const scrollToBottom = () => {
+  nextTick(() => {
+    const container = document.querySelector('.chatbot-messages');
+    if (container) {
+      container.scrollTop = container.scrollHeight; // Scroll to the bottom
+    }
+  });
 };
 
 
@@ -2334,4 +2540,106 @@ hr {
     font-size: 20px;
     margin-top: 50px;
 }
+
+.close-chat {
+    position: absolute; /* Position it absolutely within the container */
+    top: -370px; /* Adjust as needed */
+    right: -500px; /* Adjust as needed */
+    font-size: 24px; /* Size of the close icon */
+    cursor: pointer; /* Change cursor to pointer */
+    color: #333; /* Color of the close icon */
+    background: none; /* Remove background */
+    border: none; /* Remove border */
+    padding: 0; /* Remove padding */
+    margin: 0; /* Remove margin */
+    z-index: 2000;
+}
+
+/* Optional hover effect for the close button */
+.close-chat:hover {
+    color: red; /* Change color on hover */
+}
+.chatbot-header {
+  background-color: #f1f1f1;
+  padding: 5px;
+  text-align: center;
+}
+
+.chatbot-messages {
+  overflow-y: auto;
+  margin-bottom: 10px;
+  padding: 5px;
+  border: 1px solid #ddd;
+  background-color: #ddd;
+  height: 550px;
+}
+
+.user-message {
+  text-align: right;
+  color: blue;
+}
+
+.bot-message {
+  text-align: left;
+  color: green;
+}
+
+.loading {
+  text-align: center;
+  color: gray;
+}
+
+.error-message {
+  color: red;
+  margin-top: 10px;
+}
+
+.chatbot-input {
+  display: flex;
+  padding-top: 0px;
+}
+
+.chatbot-input input {
+  flex: 1;
+  padding: 10px;
+}
+
+.chatbot-input button {
+  padding: 5px 10px;
+}
+
+.chatbot-container {
+  position: fixed;
+  right: -500px; /* Adjust based on your chatbot width */
+  transform: translateY(-50%);
+  width: 500px; /* Set your desired width */
+  transition: right 0.3s ease;
+  z-index: 1000; /* Ensure it's above other content */
+  background-color: #ddd;
+}
+
+.chatbot-container.active {
+  right: 500px;
+  bottom: 34cap;
+}
+
+.preset-questions {
+  display: flex;
+  flex-direction: column; /* Stack buttons vertically */
+}
+
+.preset-questions button {
+  background-color: rgba(255, 255, 255, 0.5); /* Semi-transparent white */
+  border: 2px solid rgba(255, 255, 255, 0.7); /* Semi-transparent border */
+  color: black; /* Text color */
+  border-radius: 5px; /* Rounded corners */
+  cursor: pointer; /* Pointer cursor on hover */
+  transition: background-color 0.3s, border-color 0.3s; /* Smooth transition */
+}
+
+.preset-questions button:hover {
+  background-color: rgba(255, 255, 255, 0.5); /* Slightly more opaque on hover */
+  border-color: rgba(255, 255, 255, 1); /* Solid border on hover */
+}
+
 </style>

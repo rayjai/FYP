@@ -195,7 +195,7 @@ if (message) {
                                 </div>
                                 <div class="button-container">
 
-                                <div v-if="new Date(event.eventDateFrom) > new Date()">
+                                <div v-if="new Date(event.deadline) > new Date()">
                                         <a :href="'/eventregister/' + event._id" class="btn btn-primary" @click.stop>
                                             Register
                                         </a>
@@ -259,7 +259,7 @@ if (message) {
                                         <span class="registered">Already Registered</span>
                                     </div>
                                     <div v-else>
-                                        <div v-if="new Date(event.eventDateFrom) > new Date()">
+                                        <div v-if="new Date(event.deadline) > new Date()">
                                             <a :href="'/eventregister/' + event._id" class="btn btn-primary"
                                                 @click.stop>
                                                 Register
@@ -320,7 +320,7 @@ if (message) {
                                     </span>
                                 </p>
                                 <div class="button-container">
-                                    <div v-if="new Date(event.eventDateFrom) > new Date()">
+                                    <div v-if="new Date(event.deadline) > new Date()">
                                         <a :href="'/signin'" class="btn btn-primary" @click.stop>Register</a>
                                     </div>
                                 </div>

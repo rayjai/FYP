@@ -28,6 +28,11 @@
           <input v-else v-model="editedRecord.email" />
         </div>
         <div class="detail-field">
+          <strong>Phone Number:</strong>
+          <span v-if="!isEditing">{{ record.phoneNo }}</span>
+          <input v-else v-model="editedRecord.phoneNo" />
+        </div>
+        <div class="detail-field">
           <strong>Password:</strong>
           <span v-if="!isEditing">{{ record.password }}</span>
           <input v-else v-model="editedRecord.password" />
@@ -86,7 +91,8 @@
   import { useRoute,useRouter } from 'vue-router';
   import axios from 'axios';
   import { AgGridVue } from "ag-grid-vue3";
-
+  import toastr from 'toastr';
+  import 'toastr/build/toastr.min.css'; 
   
   const route = useRoute();
   const router = useRouter();
@@ -223,7 +229,7 @@ const filterRecords = () => {
     try {
       await axios.put(`/api/member/detail/${record.value._id}`, editedRecord.value); // Update the record on the server
       record.value = { ...editedRecord.value }; // Update the local record
-      console.log(editedRecord);
+      localStorage.setItem('toastrMessage', 'Information Updated successfully!');
     } catch (error) {
       console.error('Error updating record:', error);
     }
@@ -239,7 +245,7 @@ const filterRecords = () => {
     try {
       await axios.delete(`/api/member/detail/${record.value._id}`); // Delete the record from the server
       // Redirect or handle post-deletion logic here
-      console.log('Record deleted successfully');
+      localStorage.setItem('toastrMessage', 'Record deleted successfully!');
     } catch (error) {
       console.error('Error deleting record:', error);
     } finally {
@@ -247,7 +253,16 @@ const filterRecords = () => {
       router.push('/dashboard');
     }
   };
+  function displayToastrMessage() {
+    const message = localStorage.getItem('toastrMessage');
+    if (message) {
+        toastr.success(message);
+        localStorage.removeItem('toastrMessage'); // Clear the message after displaying
+    }
+}
 
+// Call the function every second (1000 milliseconds)
+setInterval(displayToastrMessage, 1000);
   
 
   </script>

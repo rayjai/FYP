@@ -123,21 +123,25 @@ onMounted(() => {
         </div>
         <div v-if="isStudent">
           <div class="row">
-            <div class="col-4" v-for="(event, index) in upcomingevents" :key="index">
+            <router-link v-for="event in upcomingevents" :key="event._id"
+                        :to="{ path: `/event/detail/${event._id}` }" class="card-link col-4">
               <div class="card" style="width: 18rem;">
                 <img :src="'http://localhost:3000/uploads/' + event.eventPoster" class="card-img-top" alt="Event Image">
                 <div class="card-body">
                   <h5 class="card-title">{{ event.eventName }}</h5>
                   <p class="card-text">{{ event.eventDescription }}</p>
+                  <div v-if="new Date(event.deadline) > new Date()">
                   <a :href="'/eventregister/' + event._id" class="btn btn-primary" @click.stop>Register</a>
+                  </div>
                 </div>
               </div>
-            </div>
+            </router-link>
           </div>
         </div>
         <div v-else-if="isAdmin">
           <div class="row">
-            <div class="col-4" v-for="(event, index) in upcomingevents" :key="index">
+            <router-link v-for="event in upcomingevents" :key="event._id"
+                        :to="{ path: `/event/detail/${event._id}` }" class="card-link col-4">
               <div class="card" style="width: 18rem;">
                 <img :src="'http://localhost:3000/uploads/' + event.eventPoster" class="card-img-top" alt="Event Image">
                 <div class="card-body">
@@ -150,22 +154,26 @@ onMounted(() => {
 
                 </div>
               </div>
-            </div>
+            </router-link>
 
           </div>
         </div>
         <div v-else>
           <div class="row">
-            <div class="col-4" v-for="(event, index) in upcomingevents" :key="index">
-              <div class="card" style="width: 18rem;">
+            <router-link v-for="event in upcomingevents" :key="event._id"
+            :to="{ path: `/event/detail/${event._id}` }" class="card-link col-4">              
+            <div class="card" style="width: 18rem;">
                 <img :src="'http://localhost:3000/uploads/' + event.eventPoster" class="card-img-top" alt="Event Image">
                 <div class="card-body">
                   <h5 class="card-title">{{ event.eventName }}</h5>
                   <p class="card-text">{{ event.eventDescription }}</p>
+                  <div v-if="new Date(event.deadline) > new Date()">
                   <a href="/signin" class="btn btn-primary">Register</a>
+                  </div>
                 </div>
+                
               </div>
-            </div>
+            </router-link>
           </div>
         </div>
       </div>

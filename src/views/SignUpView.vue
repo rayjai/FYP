@@ -12,6 +12,7 @@ let registrationData = ref({
     email: '',
     phoneNo:'',
     password: '',
+    username:'',
     gender: '',
     role:'student',
     icon:''
@@ -129,6 +130,15 @@ onMounted(() => {
                         <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
                         </link>
                         <i class='bx bxs-lock-alt'></i>
+                    </div>
+                </div>
+                <div class="labelGroup">
+                    User Name (Display Name)
+                    <div class="typeboxsignup">
+                        <input type="name" placeholder="e.g Bob" v-model="registrationData.username">
+                        <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+                        </link>
+                        <i class='bx bxs-user'></i>
                     </div>
                 </div>
                 <div class="labelGroup">

@@ -18,17 +18,17 @@
                         </div>
                         <div class="form-group">
                             <label for="poster1">Poster 1:</label>
-                            <input type="file" id="poster1" accept=".pdf, .png, .jpg"
+                            <input type="file" id="poster1" accept=".pdf, .png, .jpg,.jpeg"
                                 @change="event => handleFileChange(event, 1)" />
                         </div>
                         <div class="form-group">
                             <label for="poster2">Poster 2:</label>
-                            <input type="file" id="poster2" accept=".pdf, .png, .jpg"
+                            <input type="file" id="poster2" accept=".pdf, .png, .jpg,.jpeg"
                                 @change="event => handleFileChange(event, 2)" />
                         </div>
                         <div class="form-group">
                             <label for="poster3">Poster 3:</label>
-                            <input type="file" id="poster3" accept=".pdf, .png, .jpg"
+                            <input type="file" id="poster3" accept=".pdf, .png, .jpg,.jpeg"
                                 @change="event => handleFileChange(event, 3)" />
                         </div>
 

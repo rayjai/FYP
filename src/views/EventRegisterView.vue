@@ -49,6 +49,8 @@ const checkrole = async () => {
         }
         if (decoded.user.role === 'student') {
             isStudent.value = true;
+            registrationData.value.student_id = decoded.user.student_id; // Set student_id from user
+            console.log(registrationData.value.student_id);
         }
         user.value = decoded.user;
     }
@@ -265,7 +267,94 @@ onMounted(() => {
     </div>
 
     <div class="register-info">
-        <div v-if="isStudent || isAdmin">
+        <div v-if="isStudent">
+            <h2>Register Event</h2>
+            <form id="register-event" @submit.prevent="handleSubmit">
+                
+                <!-- Section Selection -->
+                <div v-if="event.sections && event.sections.length > 0">
+    <div class="form-group">
+        <label>Select Section:</label>
+        <div style="display: flex; flex-direction: row;">
+            <div v-for="(section, index) in event.sections" :key="index">
+                <div class="radio-select">
+                    <input 
+                        type="radio" 
+                        :id="'section-' + index" 
+                        :value="section.name" 
+                        v-model="registrationData.selectedSection"
+                    />
+                    <label :for="'section-' + index" style="padding-left: 10px;">
+                        {{ section.name }} 
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+                <!-- Payment Method Selection -->
+                <div v-if="event.eventType === 'charged'">
+                    <div class="form-group">
+                        <label for="payment-method">Payment Method:</label>
+                        <select id="payment-method" v-model="registrationData.paymentMethod" required>
+                            <option value="" disabled>Select a payment method</option>
+                            <option value="online">Online Payment</option>
+                            <option value="fps">FPS Payment</option>
+                            <option value="cash">Cash</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Payment Method Specific Sections -->
+                <div v-if="registrationData.paymentMethod === 'online'">
+                    <p>You will be redirected to the online payment platform later</p>
+                </div>
+
+                <div v-if="registrationData.paymentMethod === 'fps'">
+                    <h3>FPS Payment</h3>
+                    <p>Please transfer ${{ event.eventPrice }} to Tel:{{ content.fpsPaymentNumber }}</p>
+                    <div class="form-group">
+                        <label for="fpsPaymentPhoto">Upload Payment Screenshot:</label>
+                        <input type="file" id="fpsPaymentPhoto" 
+                            @change="handleFileChange" 
+                            accept="image/*" required />
+                    </div>
+                </div>
+
+                <!-- Terms and Conditions -->
+                <div class="form-group">
+                    <div class="terms" ref="termsContent" @scroll="checkScroll"
+                        style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
+                        <h3>Terms of Agreement</h3>
+                        <p>Your terms of agreement content goes here...</p>
+                    </div>
+                    <input type="checkbox" id="understand" required />
+                    <label for="understand" class="custom-checkbox-label">
+                        I have read and understand the terms of agreement.
+                    </label>
+                </div>
+
+                <!-- Submit Button -->
+                <div v-if="registrationData.paymentMethod === 'online'">
+                    <button type="submit" :disabled="isLoading">
+                        {{ isLoading ? 'Processing...' : 'Register and Pay Online' }}
+                    </button>
+                </div>
+                <div v-else>
+                    <button type="submit" :disabled="isLoading || isEventFull || !canRegister">
+                        {{ isLoading ? 'Processing...' : 'Register' }}
+                    </button>
+                    <div v-if="isEventFull" style="color: red; margin-top: 10px;">
+            The event is full. You cannot register at this time.
+        </div>
+                </div>
+            </form>
+        </div>
+
+
+        <div v-if="isAdmin">
             <h2>Register Event</h2>
             <form id="register-event" @submit.prevent="handleSubmit">
                 <div class="form-group">

@@ -37,7 +37,11 @@
           <span v-if="!isEditing">{{ record.password }}</span>
           <input v-else v-model="editedRecord.password" />
         </div>
-        
+        <div class="detail-field">
+          <strong>User Name (Display Name):</strong>
+          <span v-if="!isEditing">{{ record.username }}</span>
+          <input v-else v-model="editedRecord.username" />
+        </div>
         <div class="detail-field">
             <strong>Gender:</strong>
             <span v-if="!isEditing">{{ record.gender }}</span>

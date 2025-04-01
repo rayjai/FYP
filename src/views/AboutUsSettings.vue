@@ -18,7 +18,7 @@
             </div>
             <div class="form-group">
                 <label for="aboutImage">Update About Us Image:</label>
-                <input type="file" id="aboutImage" accept=".png, .jpg" @change="event => handleFileChange(event, 'aboutImage')" />
+                <input type="file" id="aboutImage" accept=".png, .jpg,.jpeg" @change="event => handleFileChange(event, 'aboutImage')" />
             </div>
             <div class="form-group">
                 <label>Current Logo Image</label>
@@ -28,7 +28,7 @@
             </div>
             <div class="form-group">
                 <label for="logoImage">Update Logo Image:</label>
-                <input type="file" id="logoImage" accept=".png, .jpg" @change="event => handleFileChange(event, 'logoImage')" />
+                <input type="file" id="logoImage" accept=".png, .jpg,.jpeg" @change="event => handleFileChange(event, 'logoImage')" />
             </div>
             <button type="submit">Save</button>
         </form>

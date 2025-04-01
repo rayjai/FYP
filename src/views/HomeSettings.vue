@@ -14,7 +14,7 @@
             </div>
             <div class="form-group">
                 <label for="poster1">Update Poster 1:</label>
-                <input type="file" id="poster1" accept=".pdf, .png, .jpg" @change="event => handleFileChange(event, 1)" />
+                <input type="file" id="poster1" accept=".pdf, .png, .jpg,.jpeg" @change="event => handleFileChange(event, 1)" />
             </div>
             <div class="form-group">
                 <label>Current Frame Photo 2</label>
@@ -24,7 +24,7 @@
             </div>
             <div class="form-group">
                 <label for="poster2">Update Poster 2:</label>
-                <input type="file" id="poster2" accept=".pdf, .png, .jpg" @change="event => handleFileChange(event, 2)" />
+                <input type="file" id="poster2" accept=".pdf, .png, .jpg,.jpeg" @change="event => handleFileChange(event, 2)" />
             </div>
             <div class="form-group">
                 <label>Current Frame Photo 3</label>
@@ -34,7 +34,7 @@
             </div>
             <div class="form-group">
                 <label for="poster3">Update Poster 3:</label>
-                <input type="file" id="poster3" accept=".pdf, .png, .jpg" @change="event => handleFileChange(event, 3)" />
+                <input type="file" id="poster3" accept=".pdf, .png, .jpg,.jpeg" @change="event => handleFileChange(event, 3)" />
             </div>
             <button type="submit">Save</button>
         </form>

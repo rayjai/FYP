@@ -21,6 +21,11 @@
       <div class="profile-info">
         <h2>Profile Information</h2>
         <div>
+          <strong>User Name:</strong>
+          <span v-if="!isEditing"><br>{{ record.username }}</span>
+          <input v-else v-model="editedRecord.username" />
+        </div> 
+        <div>
           <strong>Email:</strong>
           <span v-if="!isEditing"><br>{{ record.email }}</span>
           <input v-else v-model="editedRecord.email" />
@@ -47,6 +52,8 @@
   import { useRoute,useRouter } from 'vue-router';
   import axios from 'axios';
   import { jwtDecode } from 'jwt-decode'
+  import toastr from 'toastr';
+import 'toastr/build/toastr.min.css'; 
 
   const route = useRoute();
   const router = useRouter();
@@ -152,6 +159,8 @@ const updateRecord = async () => {
     const formData = new FormData();
     formData.append('email', editedRecord.value.email); // Add other fields as necessary
     formData.append('password', editedRecord.value.password);
+    formData.append('username', editedRecord.value.username);
+
     
     // If an image is selected, append it to the form data
     if (selectedImage.value) {
@@ -166,7 +175,7 @@ const updateRecord = async () => {
     });
 
     record.value = { ...editedRecord.value }; // Update the local record
-    alert('Profile updated successfully!'); // Simple feedback
+    localStorage.setItem('toastrMessage', 'Profile updated successfully!');
   } catch (error) {
     console.error('Error updating record:', error);
     alert('Failed to update profile. Please try again.'); // Error feedback
@@ -178,6 +187,18 @@ const updateRecord = async () => {
     email: '',
     avatar: 'https://via.placeholder.com/100', // Placeholder image
   });
+
+
+  function displayToastrMessage() {
+    const message = localStorage.getItem('toastrMessage');
+    if (message) {
+        toastr.success(message);
+        localStorage.removeItem('toastrMessage'); // Clear the message after displaying
+    }
+}
+
+// Call the function every second (1000 milliseconds)
+setInterval(displayToastrMessage, 1000);
   
   </script>
   

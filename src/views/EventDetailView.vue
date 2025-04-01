@@ -40,6 +40,7 @@
             </div>
             <div class="profile-info" style="padding-top: 20px;">
                 <h4>Registered Members</h4>
+                <div class="grid7-3">
                 <div class="form-group">
                 <label for="category">Select Category for Payment Confirmation *</label>
                 <select id="category" v-model="chooseCategory" required>
@@ -47,6 +48,11 @@
                 </select>
                 <p v-if="categoryWarning" class="text-danger">{{ categoryWarning }}</p>
             </div>
+            <button class="confirm-button btn btn-success custom-button" style="margin-top: 35px;" @click="openFormModal">
+                <i class='bx bx-dollar'></i> Add Finance Category
+            </button>
+        
+    </div>
                 <ag-grid-vue
                     class="ag-theme-alpine"
                     style="width: 100%; height: 500px;"
@@ -80,6 +86,27 @@
             </div>
         </div>
     </div>
+    <div id="FormModal" class="modal">
+            <div class="modal-content">
+                <span class="close" @click="closeFormModal">&times;</span>
+                <h2>Add Finance Category</h2>
+
+                <!-- Error message display -->
+                <div v-if="errorMessagefin" class="error-message">{{ errorMessagefin }}</div>
+
+                <form @submit.prevent="handleSubmit"> <!-- Bind the submit event -->
+                    <div class="form-group">
+                        <label for="code">Code</label>
+                        <input type="text" id="code" v-model="club.code" />
+                    </div>
+                    <div class="form-group">
+                        <label for="category">Category Name</label>
+                        <input type="text" id="category" v-model="club.category" />
+                    </div>
+                    <button type="submit">Save</button>
+                </form>
+            </div>
+        </div>
 </template>
 
 <script setup>
@@ -108,6 +135,44 @@ const registeredEvents = ref(new Set());
 const transformedEvents = ref([]);
 const registrationCount = ref(0);
 const username = ref("");
+const errorMessagefin = ref(''); // Reactive error message
+
+const club = ref({
+    code: '',
+    category: ''
+});
+
+const handleSubmit = async () => {
+    const clubId = "6755de91eb5ae88eaeaf53e3"; 
+    errorMessagefin.value = ''; // Reset error message
+    try {
+        const response = await axios.post(`/api/finance_category`, {
+            code: club.value.code,
+            category: club.value.category,
+            clubId: clubId
+        });
+        closeFormModal();
+        if (response.status === 200) {
+            localStorage.setItem('toastrMessage', 'Finance Category added successfully!');
+        }
+        fetchCategories();
+
+    } catch (error) {
+        console.error('Error setting category info:', error);
+        if (error.response && error.response.status === 409) {
+            errorMessagefin.value = 'Code/Name has already existed.'; // Set error message for duplicates
+        } 
+    }
+};
+
+function openFormModal() {
+    document.getElementById("FormModal").style.display = "block";
+}
+
+function closeFormModal() {
+    document.getElementById("FormModal").style.display = "none";
+    errorMessagefin.value = ''; // Reset error message when closing modal
+}
 
 const loadAsyncData = async () => {
   try {
@@ -200,7 +265,7 @@ async function fetchRegisteredEvents() {
             student_id: student.student_id,
             event_id: student.event_id,
             attendance: student.attendance !== undefined ? (student.attendance ? 'Present' : 'Absent') : 'N/A',
-            paymentMethod: student.paymentMethod !== undefined ? student.paymentMethod : 'Free',
+            paymentMethod: student.paymentMethod !== '' ? student.paymentMethod : 'Free',
             confirm: student.confirm != undefined ? student.confirm : 'N/A',
             _id: student._id // Ensure this is included
 
@@ -460,5 +525,42 @@ onMounted(() => {
 .alert {
     margin-top: 20px;
 }
+.custom-button {
+    width: 150px; /* Set your desired width */
+    height: 40px; /* Set your desired height */
+    padding: 0; /* Remove padding to maintain the set height */
+    font-size: 0.875rem; /* Adjust font size if needed */
+    line-height: 40px; /* Center text vertically */
+}
+
+.modal {
+        display: none;
+        position: fixed;
+        z-index: 1050;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgb(0, 0, 0);
+        background-color: rgba(0, 0, 0, 0.4);
+        padding-top: 60px;
+    }
+
+    .modal-content {
+        background-color: #fefefe;
+        margin: 5% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+        z-index: 1060;
+    }
+
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
 
 </style>

@@ -148,7 +148,7 @@ const event = ref({
     eventTimeStart: '',
     eventTimeEnd: '',
     eventVenue: '',
-    deadline,
+    deadline:'',
     eventType: 'free',
     eventPrice: 0,
     eventPoster: null,

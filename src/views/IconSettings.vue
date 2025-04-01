@@ -10,7 +10,7 @@
             </div>
             <div class="form-group">
                 <label for="webIcon">Upload Web Icon:</label>
-                <input type="file" id="webIcon" accept=".png, .jpg" @change="event => handleFileChange(event, 'webIcon')" />
+                <input type="file" id="webIcon" accept=".png, .jpg,.jpeg" @change="event => handleFileChange(event, 'webIcon')" />
             </div>
             <div class="form-group">
                 <label>Current Sign In/Sign Up Background Image</label>
@@ -20,7 +20,7 @@
             </div>
             <div class="form-group">
                 <label for="backgroundImage">Upload Background Image:</label>
-                <input type="file" id="backgroundImage" accept=".png, .jpg" @change="event => handleFileChange(event, 'backgroundImage')" />
+                <input type="file" id="backgroundImage" accept=".png, .jpg,.jpeg" @change="event => handleFileChange(event, 'backgroundImage')" />
             </div>
             <div class="form-group">
                 <label for="fpsPaymentNumber">FPS Payment Number:</label>

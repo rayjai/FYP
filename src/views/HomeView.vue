@@ -4,6 +4,7 @@ import Footer from '@/components/Footer.vue'
 import { onMounted, ref } from "vue";
 import { jwtDecode } from "jwt-decode";
 import '@/assets/css/home.css';
+import { useRoute,useRouter } from 'vue-router';
 
 const events = ref([]);
 const upcomingevents = ref([]);
@@ -12,7 +13,9 @@ const clubId = ref('6755de91eb5ae88eaeaf53e3');
 
 let isAdmin = ref(false);
 let isStudent = ref(false);
-
+const router = useRouter();
+const student_id = ref(""); // Store the student ID
+const registeredEvents = ref(new Set());
 
 const checkrole = async () => {
   if (localStorage.getItem('token')) {
@@ -23,6 +26,9 @@ const checkrole = async () => {
     }
     if (decoded.user.role === 'student') {
       isStudent.value = true;
+      student_id.value = decoded.user.student_id; // Assuming the student ID is in the token
+      await fetchRegisteredEvents();
+
     }
   }
 }
@@ -58,6 +64,38 @@ async function fetchHomeContent() {
   } catch (error) {
     console.error('Error fetching home events:', error);
   }
+};
+async function fetchRegisteredEvents() {
+    try {
+        const response = await fetch(`/api/registrations/` + student_id.value);
+        const registrationData = await response.json();
+
+
+
+        // Check if the response data is an array
+        if (Array.isArray(registrationData)) {
+            if (registrationData.length === 0) {
+                console.warn('No registrations found for this student.');
+            } else {
+                // Iterate over the array and add event IDs to registeredEvents
+                registrationData.forEach(event => {
+                    if (event.event_id) { // Check if event_id exists
+                        registeredEvents.value.add(event.event_id);
+                        console.log(registeredEvents);
+                    } else {
+                        console.error('Event does not have an event_id:', event);
+                    }
+                });
+            }
+        } else {
+            console.error('Unexpected response format: Expected an array but got:', registrationData);
+        }
+    } catch (error) {
+        console.error('Error fetching registered events:', error);
+    }
+}
+const isEventRegistered = (id) => {
+    return registeredEvents.value.has(id);
 };
 
 
@@ -130,8 +168,15 @@ onMounted(() => {
                 <div class="card-body">
                   <h5 class="card-title">{{ event.eventName }}</h5>
                   <p class="card-text">{{ event.eventDescription }}</p>
+                  <div class="button-container">
+                                    <div v-if="isEventRegistered(event._id)">
+                                        <span class="registered">Already Registered</span>
+                                    </div>
+                                    <div v-else>
                   <div v-if="new Date(event.deadline) > new Date()">
                   <a :href="'/eventregister/' + event._id" class="btn btn-primary" @click.stop>Register</a>
+                  </div>
+                  </div>
                   </div>
                 </div>
               </div>

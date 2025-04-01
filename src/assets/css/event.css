@@ -62,7 +62,11 @@
     grid-template-columns: repeat(3, 1fr); /* 3 columns */
     gap: 16px; /* Space between cards */
 }
-
+.grid7-3{
+  display: grid;
+  grid-template-columns: 80% 20%;
+  gap: 20px;
+}
 .card {
     width: 100%; /* Full width of the grid cell */
     height: 400px; /* Set a fixed height */

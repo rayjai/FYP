@@ -33,9 +33,7 @@
 
             
 
-                <div class="user">
-                    <img src="/src/assets/student_club1.png" alt="">
-                </div>
+                
             </div>
 
             <!-- ======================= Cards ================== -->
@@ -71,9 +69,7 @@
 
        
 
-                <div class="user">
-                    <img src="/src/assets/student_club1.png" alt="">
-                </div>
+                
             </div>
 
             <!-- ======================= Cards ================== -->
@@ -487,9 +483,6 @@
 
 
 
-                <div class="user">
-                    <img src="/src/assets/student_club1.png" alt="">
-                </div>
             </div>
             
             <div class="holder">
@@ -544,9 +537,6 @@
 
 
 
-                <div class="user">
-                    <img src="/src/assets/student_club1.png" alt="">
-                </div>
             </div>
             <div class="holder">
                 <h2>Inventory</h2>
@@ -652,19 +642,15 @@
                 </div>
 
 
-
-                <div class="user">
-                    <img src="/src/assets/student_club1.png" alt="">
-                </div>
             </div>
             <div class="setting-container">
                 <h2>Settings</h2>
                 <div class="settings-menu">
-                    <button @click="ContentSetting = 'home'">Home</button>
-                    <button @click="ContentSetting = 'about'">About Us</button>
-                    <button @click="ContentSetting = 'others'">Finance Categories</button>
-                    <button @click="ContentSetting = 'inventory_categories'">Inventory Categories</button>
-                    <button @click="ContentSetting = 'icon_bg'">Others</button>
+                    <button @click="ContentSetting = 'home'" class="btn btn-expenditure">Home</button>
+                    <button @click="ContentSetting = 'about'" class="btn btn-expenditure">About Us</button>
+                    <button @click="ContentSetting = 'others'" class="btn btn-expenditure">Finance Categories</button>
+                    <button @click="ContentSetting = 'inventory_categories'" class="btn btn-expenditure">Inventory Categories</button>
+                    <button @click="ContentSetting = 'icon_bg'" class="btn btn-expenditure">Others</button>
                 </div>
 
                 <div class="settings-content">
@@ -706,6 +692,7 @@ import 'tippy.js/dist/tippy.css';
 import toastr from 'toastr';
 import 'toastr/build/toastr.min.css'; 
 import Chatbot from '@/components/Chatbot.vue';
+
 
 
 
@@ -2248,7 +2235,7 @@ const GoPassword = () => {
 }
 
 .btn-expenditure {
-    background-color: #28a745; /* Green for expenditure */
+    background-color: #0077B6; /* Green for expenditure */
 }
 
 .btn-receivable {
@@ -2347,7 +2334,7 @@ select:focus {
 
 button {
     padding: 10px;
-    background-color: #ff7f50;
+    background-color: #00B4D8;
     border: none;
     color: white;
     cursor: pointer;
@@ -2356,7 +2343,7 @@ button {
 }
 
 button:hover {
-    background-color: #e66a3f;
+    background-color: #02a0c0;
 }
 
 h2 {
@@ -2423,7 +2410,7 @@ hr {
     transform: translateY(-2px); /* Slight lift effect */
 }
 .print-button {
-    background-color: #007bff; /* Bootstrap primary color */
+    background-color: #0077B6; /* Bootstrap primary color */
     color: white;
     border: none;
     padding: 3px 8px; /* Reduced padding */
@@ -2433,7 +2420,7 @@ hr {
     line-height: 2; /* Adjust line height */
 }
 .print-button:hover {
-    background-color: #0056b3; /* Darker shade on hover */
+    background-color: #015d8e; /* Darker shade on hover */
 }
 .print-button.disabled {
     background-color: #ccc; /* Grey background for disabled state */
@@ -2500,7 +2487,7 @@ hr {
     width: 60px;
     height: 60px;
     border-radius: 50%;
-    background-color: #4CAF50; /* Change to your preferred color */
+    background-color: #0077B6; /* Change to your preferred color */
     color: white;
     border: none;
     font-size: 24px;
@@ -2510,7 +2497,7 @@ hr {
 }
 
 .fab:hover {
-    background-color: #45a049; /* Darker shade on hover */
+    background-color: #006397; /* Darker shade on hover */
 }
 
 .fab-menu {
@@ -2523,8 +2510,8 @@ hr {
     width: 200px;
     padding: 10px;
     border-radius: 5px;
-    background-color: #ffffff; /* Background color for options */
-    color: #333; /* Text color */
+    background-color: #0077B6; /* Background color for options */
+    color: #fff; /* Text color */
     border: 1px solid #ccc;
     cursor: pointer;
     margin-bottom: 5px;
@@ -2532,7 +2519,7 @@ hr {
 }
 
 .fab-option:hover {
-    background-color: #f1f1f1; /* Change background on hover */
+    background-color: #0077B6; /* Change background on hover */
 }
 .loading-animation {
     /* Add your loading animation styles here */

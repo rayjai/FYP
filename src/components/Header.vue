@@ -174,7 +174,7 @@ onMounted(async () => {
             data-bs-toggle="dropdown" aria-expanded="false">
             {{ username }} <i class='bx bxs-user'></i>
           </a>
-          <ul class="dropdown-menu dropdown-menu-start" aria-labelledby="dropdownMenuLink">
+          <ul class="dropdown-menu custom-dropdown-menu" aria-labelledby="dropdownMenuLink">
             <li><a class="dropdown-item" href="/profile">Profile</a></li>
             <li><a class="dropdown-item" @click="logout">Logout</a></li>
           </ul>
@@ -244,7 +244,7 @@ onMounted(async () => {
             data-bs-toggle="dropdown" aria-expanded="false">
             {{ username }} <i class='bx bxs-user'></i>
           </a>
-          <ul class="dropdown-menu dropdown-menu-start" aria-labelledby="dropdownMenuLink">
+          <ul class="dropdown-menu custom-dropdown-menu" aria-labelledby="dropdownMenuLink">
             <li><a class="dropdown-item" href="/profile">Profile</a></li>
             <li><a class="dropdown-item" href="/membershipcard">Membership Card</a></li>
             <li><a class="dropdown-item" href="/studenteventrecord">Registration History</a></li>
@@ -372,5 +372,12 @@ export default {
   float: right;
   font-size: 20px;
 }
+.custom-dropdown-menu {
+    left: 0 !important; /* Align to the left */
+    right: auto !important; /* Disable right alignment */
+    transform: translateY(0); /* Reset any positioning */
+}
+
+
 
 </style>

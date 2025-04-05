@@ -26,12 +26,12 @@
 
                 <form @submit.prevent="handleSubmit"> <!-- Bind the submit event -->
                     <div class="form-group">
-                        <label for="code">Code</label>
-                        <input type="text" id="code" v-model="club.code" />
+                        <label for="code">Code<span style="color: red;"> *</span></label>
+                        <input type="text" id="code" v-model="club.code" required/>
                     </div>
                     <div class="form-group">
-                        <label for="category">Category Name</label>
-                        <input type="text" id="category" v-model="club.category" />
+                        <label for="category">Category Name<span style="color: red;"> *</span></label>
+                        <input type="text" id="category" v-model="club.category" required/>
                     </div>
                     <button type="submit">Save</button>
                 </form>

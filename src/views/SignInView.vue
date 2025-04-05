@@ -11,6 +11,12 @@ const credentials = ref({
 });
 
 const errorMessage = ref(''); // Reactive property for error message
+const isPasswordVisible = ref(false); // Track password visibility
+
+const togglePasswordVisibility = () => {
+    isPasswordVisible.value = !isPasswordVisible.value; // Toggle the visibility
+};
+
 
 const login = async () => {
     errorMessage.value = ''; // Reset error message before login attempt
@@ -98,8 +104,17 @@ onMounted(() => {
                     <i class='bx bx-envelope'></i>
                 </div>
                 <div class="typebox">
-                    <input type="password" placeholder="Password" v-model="credentials.password">
-                    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'></link>
+                    <input 
+                        :type="isPasswordVisible ? 'text' : 'password'" 
+                        placeholder="Password" 
+                        v-model="credentials.password">
+                    <i class='bx bxs-lock-alt'></i>
+                    <i 
+                        class="bx" 
+                        :class="isPasswordVisible ? 'bx-show' : 'bx-hide'" 
+                        @click="togglePasswordVisibility" 
+                        style="cursor: pointer; margin-right: 30px;"></i>
+                                            <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'></link>
                     <i class='bx bxs-lock-alt'></i>
                 </div>
 

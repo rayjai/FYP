@@ -271,6 +271,26 @@ body {
   color: var(--white);
 }
 
+.chartBox {
+  position: relative;
+  width: 100%;
+  padding: 20px;
+  display: grid;
+  grid-template-columns: 66% 33%;
+  grid-gap: 10px;
+}
+
+.chartBox .card {
+  position: relative;
+  background: var(--white);
+  padding: 30px;
+  border-radius: 20px;
+  display: flex;
+  justify-content: space-between;
+  cursor: pointer;
+  box-shadow: 0 7px 25px rgba(0, 0, 0, 0.08);
+}
+
 /* ================== Order Details List ============== */
 .details {
   position: relative;

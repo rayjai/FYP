@@ -8,6 +8,9 @@ export default defineConfig({
   plugins: [
     vue(),
   ],
+  build: {
+    target: 'esnext' // Change this to 'esnext' or a version that supports top-level await
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
@@ -22,4 +25,5 @@ export default defineConfig({
       }
     }
 },
+
 })

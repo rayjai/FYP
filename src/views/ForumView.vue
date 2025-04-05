@@ -1,7 +1,7 @@
 <script setup>
 import Header from '@/components/Header.vue'
 import Footer from '@/components/Footer.vue'
-import { onMounted, ref, computed } from "vue";
+import { onMounted, ref, computed, onBeforeUnmount } from "vue";
 import { useRouter } from 'vue-router';
 import { jwtDecode } from "jwt-decode";
 import Spinner from '@/components/Spinner.vue'; // Assuming you have a Spinner component for loading state
@@ -9,6 +9,7 @@ import ConfirmDialog from './ConfirmDialog.vue'; // Import the custom confirm di
 import toastr from 'toastr';
 import 'toastr/build/toastr.min.css'; 
 const router = useRouter();
+
 
 
 const posts = ref([]);
@@ -113,12 +114,23 @@ const pages = computed(() => {
     }
     return pagesArray;
 });
+const handleClickOutside = (event) => {
+  if (!event.target.closest('.dropdown')) {
+    dropdownVisible.value = {};
+  }
+};
 
 // Fetch posts on component mount
 onMounted(() => {
-    checkrole();
-    fetchPosts(currentPage.value);
+  checkrole();
+  fetchPosts(currentPage.value);
+  document.addEventListener('click', handleClickOutside);
 });
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleClickOutside);
+});
+
 
 // Function to handle image navigation
 const nextImage = (post) => {
@@ -248,109 +260,157 @@ if (message) {
 }
 </script>
 
+
 <template>
     <Header />
-    <div style="height: 80px;"></div>
+    <div class="header-spacer"></div>
 
     <div v-if="isAdmin||isStudent" class="forum-container">
-        <div style="display: flex;">
-            <h1>Forum</h1>
-                <div style="margin-left: auto;">
-                    <div v-if="isAdmin||isStudent">
-                    <a :href="'/createpost/' + student_id" class="btn btn-primary">Create New Post</a>
-                    </div>
-                </div>
+        <div class="forum-header">
+            <h1 class="forum-title">Community Forum</h1>
+            <div class="create-post-btn">
+                <a :href="'/createpost/' + student_id" class="btn-primary">
+                    <i class="fas fa-plus"></i> Create New Post
+                </a>
+            </div>
         </div>
         
-
-        <div class="posts">
-            <div v-if="isLoading">
+        <div class="posts-container">
+            <div v-if="isLoading" class="loading-container">
                 <Spinner />
             </div>
             <div v-else>
-                <div v-if="posts.length === 0">
-                    <p>No posts available.</p>
+                <div v-if="posts.length === 0" class="empty-state">
+                    <i class="fas fa-comment-slash"></i>
+                    <p>No posts available yet. Be the first to share!</p>
                 </div>
-                <div v-for="post in posts" :key="post._id" class="post">
-                    <div class="user-info">
-                        <img v-if="post.user.icon" :src="`http://localhost:3000/uploads/${post.user.icon}`" class="user-profile-picture" alt="User  Profile Picture" />
-                        <img v-else src="/src/assets/user-circle.png" class="user-profile-picture" alt="Default Profile Picture" /> <!-- Default profile picture -->
-                        <div class="user-name">
-                            {{ post.user.english_name }}
-                        </div>
-                        <div class="dropdown">
-                            <div v-if="isAdmin || (student_id === post.student_id)">
-
-                            <button class="dropdown-button" @click="toggleDropdown(post._id)">&#x2022;&#x2022;&#x2022;</button>
-                                <div v-if="dropdownVisible[post._id]" class="dropdown-menu">
-                                <button @click="editPost(post._id)">Edit</button>
-                                <button @click="openConfirmDialog(post._id)">Delete</button>
-                                </div>                    
+                
+                <div v-for="post in posts" :key="post._id" class="post-card">
+                    <div class="post-header">
+                        <div class="user-info">
+                            <div class="avatar-container">
+                                <img v-if="post.user.icon" :src="`http://localhost:3000/uploads/${post.user.icon}`" class="user-avatar" alt="Profile" />
+                                <img v-else src="/src/assets/user-circle.png" class="user-avatar" alt="Profile" />
+                            </div>
+                            <div class="user-details">
+                                <span class="user-name">{{ post.user.english_name }}</span>
+                                <span class="post-time">{{ formatCreatedAt(post.createdAt) }}</span>
                             </div>
                         </div>
-                    </div>
-                    <p class="created-time">{{ formatCreatedAt(post.createdAt) }}</p>
-                    <div class="post-content" @click="redirectToPostDetail(post._id)" @click.stop>
-                        <h3>{{ post.title }}</h3>
-                        <div class="photo-gallery">
-                            <div v-if="post.eventPoster1 || post.eventPoster2 || post.eventPoster3">
-                                <div class="image-container">
-                                    <img v-if="post.eventPoster1 && post.currentImageIndex === 0" 
-                                         :src="`http://localhost:3000/uploads/${post.eventPoster1}`" 
-                                         class="gallery-image" 
-                                         alt="Post Image 1" />
-                                    <img v-if="post.eventPoster2 && post.currentImageIndex === 1" 
-                                         :src="`http://localhost:3000/uploads/${post.eventPoster2}`" 
-                                         class="gallery-image" 
-                                         alt="Post Image 2" />
-                                    <img v-if="post.eventPoster3 && post.currentImageIndex === 2" 
-                                         :src="`http://localhost:3000/uploads/${post.eventPoster3}`" 
-                                         class="gallery-image" 
-                                         alt="Post Image 3" />
-                                </div>
-                                <div class="image-navigation">
-                                    <button @click="prevImage(post)" :disabled="post.currentImageIndex === 0">Previous</button>
-                                    <button @click="nextImage(post)" :disabled="post.currentImageIndex === 2">Next</button>
-                                </div>
-                            </div>
-                            <div v-else>
-                                <p>No photos uploaded for this post.</p>
-                            </div>
+                        
+                        <div class="post-actions" v-if="isAdmin || (student_id === post.student_id)">
+                            <div class="dropdown">
+  <button class="dropdown-toggle" @click.stop="toggleDropdown(post._id)">
+    <i class="fas fa-ellipsis-v"></i>
+  </button>
+  <div v-if="dropdownVisible[post._id]" class="dropdown-menu" @click.stop>
+    <button @click="editPost(post._id)" class="dropdown-item">
+      <i class="fas fa-edit"></i> Edit
+    </button>
+    <button @click="openConfirmDialog(post._id)" class="dropdown-item">
+      <i class="fas fa-trash"></i> Delete
+    </button>
+  </div>                    
+</div>
                         </div>
                     </div>
+                    
+                    <div class="post-content" @click="redirectToPostDetail(post._id)">
+                        <h3 class="post-title">{{ post.title }}</h3>
+                        
+                        <div class="media-gallery" v-if="post.eventPoster1 || post.eventPoster2 || post.eventPoster3">
+                            <div class="gallery-container">
+                                <img v-if="post.eventPoster1 && post.currentImageIndex === 0" 
+                                     :src="`http://localhost:3000/uploads/${post.eventPoster1}`" 
+                                     class="gallery-image" 
+                                     alt="Post Image" />
+                                <img v-if="post.eventPoster2 && post.currentImageIndex === 1" 
+                                     :src="`http://localhost:3000/uploads/${post.eventPoster2}`" 
+                                     class="gallery-image" 
+                                     alt="Post Image" />
+                                <img v-if="post.eventPoster3 && post.currentImageIndex === 2" 
+                                     :src="`http://localhost:3000/uploads/${post.eventPoster3}`" 
+                                     class="gallery-image" 
+                                     alt="Post Image" />
+                                
+                                <div class="gallery-controls">
+                                    <button @click.stop="prevImage(post)" 
+                                            :disabled="post.currentImageIndex === 0" 
+                                            class="gallery-nav prev">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </button>
+                                    <button @click.stop="nextImage(post)" 
+                                            :disabled="post.currentImageIndex === 2" 
+                                            class="gallery-nav next">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-else class="no-media">
+                            <i class="fas fa-image"></i>
+                            <span>No photos uploaded</span>
+                        </div>
+                    </div>
+                    
                     <div class="post-footer">
-                        <span class="comment-count" @click="redirectToPostDetail(post._id)" @click.stop>{{ post.commentsCount }} Comments</span>
-                        <span class="like-count">{{ post.likesCount }} Likes</span>
-                        <div v-if="isAdmin||isStudent">
-                            <button class="like-button" @click="likePost(post._id, student_id)">
-                                <span :class="{'liked': post.isLiked}">&#9829;</span> <!-- Heart icon -->
-                            </button>
+                        <div class="engagement-stats">
+                            <span class="comments" @click.stop="redirectToPostDetail(post._id)">
+                                <i class="fas fa-comment"></i> {{ post.commentsCount }}
+                            </span>
+                            <span class="likes">
+                                <i class="fas fa-heart"></i> {{ post.likesCount }}
+                            </span>
                         </div>
+                        
+                        <button v-if="isAdmin||isStudent" 
+                                @click.stop="likePost(post._id, student_id)"
+                                class="like-btn"
+                                :class="{'liked': post.isLiked}">
+                            <i class="fas fa-heart"></i>
+                        </button>
                     </div>
-                    <div class="comment-section">
-                    <input type="text" v-model="post.comment" placeholder="Type comments here" />
-                    <button @click="submitComment(post._id)">Submit</button>
-                    </div>
+                    
+                    <div class="comment-box">
+    <input 
+      type="text" 
+      v-model="post.comment" 
+      placeholder="Write a comment..." 
+      @keyup.enter="submitComment(post._id)"
+    />
+    <button @click.stop="submitComment(post._id)" class="comment-submit">
+      <i class="fas fa-paper-plane"></i>
+    </button>
+  </div>
                 </div>
             </div>
         </div>
 
-        <div class="pagination">
-            <nav aria-label="Page navigation">
-                <ul class="pagination justify-content-center">
-                    <li class="page-item" :class="{ disabled: currentPage === 1 }">
-                        <a class="page-link" @click="fetchPosts(currentPage - 1)">Previous</a>
-                    </li>
-                    <li class="page-item" v-for="index in pages" :key="index" :class="{ active: index === currentPage }">
-                        <a class="page-link" @click="fetchPosts(index)">{{ index }}</a>
-                    </li>
-                    <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-                        <a class="page-link" @click="fetchPosts(currentPage + 1)">Next</a>
-                    </li>
-                </ul>
+        <div class="pagination-container" v-if="totalPages > 1">
+            <nav class="pagination-nav">
+                <button @click="fetchPosts(currentPage - 1)" 
+                        :disabled="currentPage === 1" 
+                        class="page-nav">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                
+                <button v-for="index in pages" 
+                        :key="index" 
+                        @click="fetchPosts(index)"
+                        :class="{'active': index === currentPage}"
+                        class="page-number">
+                    {{ index }}
+                </button>
+                
+                <button @click="fetchPosts(currentPage + 1)" 
+                        :disabled="currentPage === totalPages" 
+                        class="page-nav">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
             </nav>
         </div>
     </div>
+    
     <ConfirmDialog 
         :isVisible="isConfirmDialogVisible" 
         title="Confirm Deletion" 
@@ -358,177 +418,497 @@ if (message) {
         @confirm="deletePost(selectedPostId)" 
         @cancel="closeConfirmDialog" 
     />
+    
     <Footer />
 </template>
 
 <style scoped>
+/* Base Styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #333;
+    background-color: #f9f9f9;
+}
+
+.header-spacer {
+    height: 80px;
+}
+
+/* Forum Container */
 .forum-container {
-    max-width: 600px;
-    margin: auto;
-    padding: 20px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1rem;
 }
 
-.posts,
-.post-detail {
-    margin-bottom: 20px;
+.forum-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e0e0e0;
 }
 
-.post {
-    border: 1px solid #e0e0e0;
-    padding: 10px;
-    margin-bottom: 10px;
-    cursor: pointer;
-}
-
-.post h3 {
+.forum-title {
+    font-size: 2rem;
+    color: #166088;
     margin: 0;
+    font-weight: 600;
+}
+
+.create-post-btn {
+    color: black;
+    margin-left: auto;
+}
+
+.btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background-color: #4a6fa5;
+    color: white;
+    border: none;
+    border-radius: 30px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.btn-primary:hover {
+    background-color: #166088;
+    transform: translateY(-2px);
+}
+
+/* Posts Container */
+.posts-container {
+    margin-bottom: 2rem;
+}
+
+.loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #777;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: #ddd;
+}
+
+.empty-state p {
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+/* Post Card */
+.post-card {
+    background-color: #ffffff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.post-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.post-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
 }
 
 .user-info {
     display: flex;
-    align-items: center; /* Align items vertically centered */
-    justify-content: space-between; /* Space between user info and dropdown */
-    margin-bottom: 10px; /* Space between user info and post title */
+    align-items: center;
+    gap: 1rem;
+}
+
+.avatar-container {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+    border: 2px solid #e0e0e0;
+}
+
+.user-avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.user-details {
+    display: flex;
+    flex-direction: column;
 }
 
 .user-name {
-    font-weight: bold; /* Optional: make the username bold */
-    margin-right: auto; /* Push the dropdown to the right */
+    font-weight: 600;
+    color: #333;
 }
 
-.user-profile-picture {
-    width: 40px; /* Set a fixed width for the profile picture */
-    height: 40px; /* Set a fixed height for the profile picture */
-    border-radius: 50%; /* Make the image circular */
-    margin-right: 10px; /* Space between the image and name */
+.post-time {
+    font-size: 0.85rem;
+    color: #777;
+    margin-top: 0.2rem;
 }
 
-
-.created-time {
-    color: grey; /* Set the color to grey */
-    font-size: 0.9em; /* Optional: adjust font size */
-    margin-top: 5px; /* Optional: add some spacing */
-}
-
-.photo-gallery {
-    margin-top: 10px;
-}
-
-.image-container {
+.post-actions {
     position: relative;
 }
 
-.gallery-image {
-    width: 100%; /* Make images responsive */
-    border-radius: 5px; /* Optional: rounded corners */
-}
-
-.image-navigation {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 10px;
-}
-
-button {
-    margin-top: 10px;
-}
-
-.pagination {
-    margin-top: 20px;
-}
-
+/* Dropdown Styles */
 .dropdown {
-    position: relative; /* Ensure the dropdown is positioned relative to its parent */
+    position: relative;
+    display: inline-block;
 }
 
-.dropdown-button {
-    background: none; /* No background */
-    border: none; /* No border */
-    cursor: pointer; /* Pointer cursor */
-    font-size: 20px; /* Size of the bullet points */
-    margin-left: 10px;
+.dropdown-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    color: #777;
+    font-size: 1.2rem;
+    transition: color 0.2s;
+}
+
+.dropdown-toggle:hover {
+    color: #4a6fa5;
 }
 
 .dropdown-menu {
-    position: absolute; /* Position absolute to the dropdown */
-    right: 0; /* Align to the right */
-    background: white; /* Background color */
-    border: 1px solid #ccc; /* Border */
-    border-radius: 5px; /* Rounded corners */
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Shadow */
-    z-index: 1000; /* Ensure it appears above other elements */
-    display: block; /* Ensure dropdown is displayed */
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    min-width: 120px;
+    z-index: 1000;
+    overflow: hidden;
+    display: block !important;
 }
 
-.dropdown-menu button {
-    display: block; /* Block display for buttons */
-    width: 100%; /* Full width */
-    padding: 10px; /* Padding */
-    border: none; /* No border */
-    background: none; /* No background */
-    text-align: left; /* Align text to the left */
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: none;
+    border: none;
+    text-align: left;
+    color: #333;
+    cursor: pointer;
+    transition: background 0.2s;
 }
 
-.dropdown-menu button:hover {
-    background: #f0f0f0; /* Highlight on hover */
+.dropdown-item:hover {
+    background: #f5f5f5;
 }
 
+.dropdown-item i {
+    width: 20px;
+    text-align: center;
+}
+
+/* Post Content */
+.post-content {
+    margin-bottom: 1.5rem;
+    cursor: pointer;
+}
+
+.post-title {
+    font-size: 1.4rem;
+    margin: 0 0 1rem 0;
+    color: #166088;
+    line-height: 1.4;
+}
+
+.media-gallery {
+    margin-top: 1rem;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+}
+
+.gallery-container {
+    position: relative;
+    padding-top: 56.25%; /* 16:9 aspect ratio */
+    background: #f0f0f0;
+}
+
+.gallery-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: white;
+}
+
+.gallery-controls {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+}
+
+.gallery-nav {
+    pointer-events: auto;
+    background: rgba(0, 0, 0, 0.4);
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.gallery-nav:hover {
+    background: rgba(0, 0, 0, 0.6);
+}
+
+.gallery-nav:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.no-media {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    color: #777;
+}
+
+.no-media i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: #ddd;
+}
+
+/* Post Footer */
 .post-footer {
     display: flex;
-    justify-content: space-between; /* Space between comment and like counts */
-    margin-top: 10px; /* Space above the footer */
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1rem;
+    border-top: 1px solid #e0e0e0;
 }
 
-.comment-count, .like-count {
-    color: grey; /* Set the color to grey */
-    font-size: 0.9em; /* Optional: adjust font size */
+.engagement-stats {
+    display: flex;
+    gap: 1.5rem;
 }
 
-.like-button {
-    background: none; /* No background */
-    border: none; /* No border */
-    cursor: pointer; /* Pointer cursor */
-    font-size: 40px; /* Size of the heart */
-    color: grey; /* Default color */
+.engagement-stats span {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #777;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: color 0.2s;
 }
 
-.liked {
-    color: red; /* Change color when liked */
+.engagement-stats span:hover {
+    color: #4a6fa5;
 }
 
-.comment-section {
-    display: flex; /* Use flexbox for alignment */
-    align-items: center; /* Center items vertically */
-    margin-top: 10px; /* Space above the comment section */
+.engagement-stats i {
+    font-size: 1.1rem;
 }
 
-.comment-section input[type="text"] {
-    flex: 1; /* Allow the input to take up available space */
-    padding: 10px; /* Add some padding */
-    border: 1px solid #ccc; /* Light grey border */
-    border-radius: 20px; /* Rounded corners */
-    outline: none; /* Remove outline on focus */
-    transition: border-color 0.3s; /* Smooth transition for border color */
+/* Like Button */
+.like-btn {
+    background: none;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #777;
+    cursor: pointer;
+    transition: all 0.2s;
 }
 
-.comment-section input[type="text"]:focus {
-    border-color: #007bff; /* Change border color on focus */
+.like-btn:hover {
+    background: rgba(231, 76, 60, 0.1);
 }
 
-.comment-section button {
-    padding: 10px 15px; /* Add padding for the button */
-    margin-left: 10px; /* Space between input and button */
-    border: none; /* Remove default border */
-    border-radius: 20px; /* Rounded corners */
-    background-color: #007bff; /* Button background color */
-    color: white; /* Button text color */
-    cursor: pointer; /* Pointer cursor on hover */
-    transition: background-color 0.3s; /* Smooth transition for background color */
+.like-btn i {
+    font-size: 1.2rem;
+    transition: color 0.2s;
 }
 
-.comment-section button:hover {
-    background-color: #0056b3; /* Darker shade on hover */
+.like-btn:hover i {
+    color: #e74c3c;
+}
+
+.like-btn.liked i {
+    color: #e74c3c !important;
+}
+
+/* Comment Box */
+.comment-box {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e0e0e0;
+}
+
+.comment-box input {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 30px;
+    font-size: 0.95rem;
+    transition: border-color 0.2s;
+}
+
+.comment-box input:focus {
+    outline: none;
+    border-color: #4a6fa5;
+}
+
+.comment-submit {
+    padding: 0 1.5rem;
+    border: none;
+    border-radius: 30px;
+    background: #4a6fa5;
+    color: white;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-weight: 500;
+}
+
+.comment-submit:hover {
+    background: #166088;
+}
+
+/* Pagination */
+.pagination-container {
+    margin: 2rem 0;
+}
+
+.pagination-nav {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.page-nav, .page-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: none;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.page-nav:hover, .page-number:hover {
+    background: #f0f0f0;
+}
+
+.page-nav:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.page-number.active {
+    background: #4a6fa5;
+    color: white;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .forum-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .create-post-btn {
+        margin-left: 0;
+        width: 100%;
+    }
+    
+    .btn-primary {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .post-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .post-actions {
+        align-self: flex-end;
+    }
+    
+    .comment-submit {
+        padding: 0 1rem;
+    }
+}
+
+/* Animation */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.post-card {
+    animation: fadeIn 0.3s ease forwards;
+}
+
+.post-card:nth-child(odd) {
+    animation-delay: 0.05s;
+}
+
+.post-card:nth-child(even) {
+    animation-delay: 0.1s;
 }
 </style>

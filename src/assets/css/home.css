@@ -1,3 +1,4 @@
+
 .carousel {
     height: 600px;
 }
@@ -44,14 +45,163 @@
     /* Adjust paragraph font size */
 }
 
-.description {
-    font-size: 1.2rem;
-    background-color: #fff;
+/* Hero Section Styles */
+.hero-section {
+    background-color: #f9f9f9; /* Light grey background */
+    color: #333; /* Dark grey text */
     text-align: center;
-    justify-content: center;
-    align-items: center;
-    margin: 60px 20px;
+    padding: 100px 20px; /* Increased padding for a more spacious look */
+    border-radius: 15px; /* Rounded corners */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
+    transition: background-color 0.3s, transform 0.3s; /* Animation for background on hover */
 }
+
+.hero-section:hover {
+    background-color: #e0e0e0; /* Slightly darker grey on hover */
+    transform: scale(1.02); /* Slight zoom effect on hover */
+}
+
+.hero-section h1 {
+    font-size: 3.5rem; /* Larger font size */
+    margin-bottom: 20px; /* Increased margin */
+    font-family: 'Georgia', serif; /* Elegant font */
+}
+
+.hero-section p {
+    font-size: 1.6rem; /* Slightly larger font size */
+    margin-bottom: 25px; /* Increased margin */
+    font-style: italic; /* Italic style for emphasis */
+}
+
+/* Description Section */
+.description {
+    background-color: #ffffff; /* White background */
+    text-align: center;
+    padding: 50px 30px; /* Increased padding */
+    border-radius: 15px; 
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15); /* Enhanced shadow */
+    margin: 30px 0; 
+    transition: transform 0.3s, box-shadow 0.3s; /* Smooth transition effects */
+}
+
+.description:hover {
+    transform: scale(1.03); /* Slight zoom effect on hover */
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2); /* Deeper shadow on hover */
+}
+
+/* Upcoming Events Section */
+.upcomingcontainer {
+    width: 90%; 
+    margin: auto; 
+}
+
+.row {
+    display: flex;
+    flex-wrap: wrap; 
+    justify-content: space-between; 
+}
+
+.card-link {
+    text-decoration: none; 
+    color: #333; /* Dark grey text */
+    margin: 20px; /* Increased margin */
+    flex: 1 0 calc(30% - 40px); /* Adjusted flex basis */
+    max-width: 400px; 
+}
+
+/* Card Styles */
+.card {
+    background-color: #ffffff; /* White background */
+    border: 1px solid #e0e0e0; /* Light grey border */
+    border-radius: 12px; /* Rounded corners */
+    overflow: hidden; 
+    transition: transform 0.3s, box-shadow 0.3s; 
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Soft shadow */
+}
+
+.card:hover {
+    transform: translateY(-5px); /* Lift effect on hover */
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2); /* Deeper shadow */
+}
+
+.card-img-top {
+    border-radius: 12px 12px 0 0; /* Rounded corners for the image */
+}
+
+/* Button and Registration Info */
+.registered {
+    color: #28a745; /* Green for registered status */
+    font-weight: bold; 
+    margin-top: 10px; 
+    font-size: 1.1rem; /* Slightly larger font size */
+}
+
+.custom-btn{
+    background-color: #4a5568; /* Darker grey button */
+    color: #4a5568; 
+    padding: 12px 20px; /* Increased padding for a more substantial look */
+    border-radius: 30px; /* Rounded edges for a modern look */
+    text-decoration: none; 
+    margin-top: 10px; 
+    transition: background-color 0.3s, transform 0.3s, box-shadow 0.3s; /* Added transition for shadow */
+    font-size: 1rem; /* Consistent font size */
+    border: none; /* No border */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15); /* Soft shadow */
+    cursor: pointer; /* Pointer cursor on hover */
+}
+
+.custom-btn:hover {
+    background-color: #2d3748; /* Even darker grey on hover */
+    transform: translateY(-3px); /* Lift effect on hover */
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2); /* Deeper shadow on hover */
+}
+
+.custom-btn:focus {
+    outline: none; /* Remove outline on focus */
+    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.6); /* Blue outline for accessibility */
+}
+
+
+/* Membership Info Section */
+.membership-info {
+    background-color: #f9f9f9; /* Light grey background */
+    text-align: center;
+    padding: 50px 20px; /* Increased padding */
+    border-radius: 15px; 
+    margin-top: 30px; 
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.membership-info h2 {
+    font-size: 2.5rem; /* Larger font size */
+    color: #333; /* Dark grey text */
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .card-link {
+        flex-basis: calc(100% - 40px); /* Adjusted for smaller screens */
+    }
+    
+    #description, .membership-info {
+        padding: 30px 15px; /* Adjusted padding */
+    }
+
+    h1, h2 {
+        font-size: 2rem; /* Consistent font size */
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-section h1 {
+        font-size: 2rem; /* Smaller font size for mobile */
+    }
+
+    .hero-section p {
+        font-size: 1.2rem; /* Consistent mobile font size */
+    }
+}
+
 
 .aboutbg {
     position: relative;

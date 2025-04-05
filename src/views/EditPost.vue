@@ -1,60 +1,62 @@
 <template>
-    <main>
+    <main class="edit-post-page">
         <Header />
-        <div style="height: 80px;"></div>
+        <div class="header-spacer"></div>
 
-            <div class="container">
-                <div class="form-container" style="max-height: 80vh; overflow-y: auto;">
-                    <div class="return-btn">
-                        <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'></link>
-                        <a href="/forum"><i class='bx bx-arrow-back'></i></a>
-                    </div>
-                    <h2>Edit Post</h2>
-                    <form @submit.prevent="handleSubmit">
-                        <div class="form-group">
-                            <label for="title">Title:</label>
-                            <input type="text" id="title" v-model="post.title" placeholder="Enter title">
-                        </div>
-                        <div class="form-group">
-                            <label for="description">Description:</label>
-                            <textarea id="description" v-model="post.description" placeholder="Enter description"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label>Current Frame Photo 1</label>
-                            <div v-if="post.eventPoster1">
-                            <img :src="'http://localhost:3000/uploads/' + post.eventPoster1" alt="Current Event Poster" class="current-poster" />
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="poster1">Poster 1:</label>
-                            <input type="file" id="poster1" accept=".pdf, .png, .jpg" @change="event => handleFileChange(event, 1)" />
-                        </div>
-                        <div class="form-group">
-                            <label>Current Frame Photo 2</label>
-                            <div v-if="post.eventPoster2">
-                                <img :src="'http://localhost:3000/uploads/' + post.eventPoster2" alt="Current Event Poster" class="current-poster" />
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="poster2">Poster 2:</label>
-                            <input type="file" id="poster2" accept=".pdf, .png, .jpg,.jpeg" @change="event => handleFileChange(event, 2)" />
-                        </div>
-                        <div class="form-group">
-                            <label>Current Frame Photo 3</label>
-                            <div v-if="post.eventPoster3">
-                                <img :src="'http://localhost:3000/uploads/' + post.eventPoster3" alt="Current Event Poster" class="current-poster" />
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="poster3">Poster 3:</label>
-                            <input type="file" id="poster3" accept=".pdf, .png, .jpg,.jpeg" @change="event => handleFileChange(event, 3)" />
-                        </div>
-
-                        <button type="submit">Update Event</button>
-                    </form>
+        <div class="edit-container">
+            <div class="edit-card">
+                <div class="return-btn">
+                    <a href="/forum" class="back-link">
+                        <i class='bx bx-arrow-back'></i>
+                        <span>Back to Forum</span>
+                    </a>
                 </div>
+                
+                <h1 class="edit-title">Edit Your Post</h1>
+                
+                <form @submit.prevent="handleSubmit" class="edit-form">
+                    <div class="form-group">
+                        <label for="title">Title</label>
+                        <input type="text" id="title" v-model="post.title" placeholder="Enter a catchy title">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea id="description" v-model="post.description" 
+                                  placeholder="Tell us more about your post..."></textarea>
+                    </div>
+                    
+                    <div class="image-upload-section">
+                        <div class="image-upload-group" v-for="n in 3" :key="n">
+                            <div class="current-image" v-if="post[`eventPoster${n}`]">
+                                <label>Current Image {{n}}</label>
+                                <img :src="'http://localhost:3000/uploads/' + post[`eventPoster${n}`]" 
+                                     :alt="'Current Image ' + n" 
+                                     class="current-poster" />
+                            </div>
+                            
+                            <div class="file-upload">
+                                <label :for="'poster'+n">Upload New Image {{n}}</label>
+                                <div class="upload-area">
+                                    <input type="file" 
+                                           :id="'poster'+n" 
+                                           accept=".png, .jpg, .jpeg" 
+                                           @change="event => handleFileChange(event, n)" />
+                                    <div class="upload-hint">
+                                        <i class='bx bx-cloud-upload'></i>
+                                        <span>Click to browse or drag & drop</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="submit-btn">
+                        <i class='bx bx-save'></i> Update Post
+                    </button>
+                </form>
             </div>
-        
+        </div>
     </main>
 </template>
 
@@ -63,71 +65,50 @@ import Header from '@/components/Header.vue'
 import { onMounted, ref } from "vue";
 import { useRoute } from 'vue-router';
 import axios from 'axios';
-import { jwtDecode } from "jwt-decode";
-import '@/assets/css/event.css';
-
-
+import toastr from 'toastr';
+import 'toastr/build/toastr.min.css'; 
 
 const route = useRoute();
-
-let poster1 = ref(null);
-let poster2 = ref(null);
-let poster3 = ref(null);
-let postid = route.params.id;
-let post = ref({
+const postid = route.params.id;
+const post = ref({
+    title: '',
+    description: '',
     eventPoster1: null,
     eventPoster2: null,
     eventPoster3: null,
 });
 
-
+const posterFiles = ref([null, null, null]);
 
 const fetchPost = async () => {
-    const postId = postid;
     try {
-        const response = await axios.get(`/api/post/detail/${postId}`);
-        post.value = response.data; // Assuming the API returns the event object
-        console.log(response.data);
+        const response = await axios.get(`/api/post/detail/${postid}`);
+        post.value = response.data;
     } catch (error) {
         console.error(error);
     }
 }
 
 const handleFileChange = (event, posterNumber) => {
-    const file = event.target.files[0]; // Get the first file
-    if (posterNumber === 1) {
-        poster1.value = file; // Store the file in the reactive reference
-    } else if (posterNumber === 2) {
-        poster2.value = file;
-    } else if (posterNumber === 3) {
-        poster3.value = file;
-    }
-
-
+    posterFiles.value[posterNumber] = event.target.files[0];
 };
 
-const handleSubmit = async () => { // Declare as async
-    const postId = route.params.id;
-
-    console.log(poster1.value, poster2.value, poster3.value); // Check file values
-
+const handleSubmit = async () => {
     const formData = new FormData();
-    
     formData.append('title', post.value.title);
-    formData.append('description', post.value.description); // Use club.value.description
+    formData.append('description', post.value.description);
 
-    // Append the files to the correct database field names
-    if (poster1.value) formData.append('eventPoster1', poster1.value);
-    if (poster2.value) formData.append('eventPoster2', poster2.value);
-    if (poster3.value) formData.append('eventPoster3', poster3.value);
+    for (let i = 1; i <= 3; i++) {
+        if (posterFiles.value[i]) {
+            formData.append(`eventPoster${i}`, posterFiles.value[i]);
+        }
+    }
 
     try {
-        const response = await axios.put(`/api/editpost/${postId}`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            }
+        const response = await axios.put(`/api/editpost/${postid}`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
         });
-        console.log(response.data);
+        
         if (response.status === 200) {
             window.location.href = '/forum';
         }
@@ -136,8 +117,249 @@ const handleSubmit = async () => { // Declare as async
     }
 };
 
-
 onMounted(() => {
     fetchPost();
 });
 </script>
+<style scoped>
+.edit-post-page {
+    background-color: #ffffff;
+    min-height: 100vh;
+}
+
+.header-spacer {
+    height: 80px;
+}
+
+/* Container Styles */
+.edit-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+.edit-card {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    padding: 2.5rem;
+    border: 1px solid #dee2e6;
+}
+
+/* Header Styles */
+.return-btn {
+    margin-bottom: 1.5rem;
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #4361ee;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.back-link:hover {
+    color: #3a0ca3;
+}
+
+.back-link i {
+    font-size: 1.5rem;
+}
+
+.edit-title {
+    color: #3a0ca3;
+    margin-bottom: 2rem;
+    font-size: 1.8rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+/* Form Styles */
+.edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: #2b2d42;
+    font-size: 0.95rem;
+}
+
+.form-group input,
+.form-group textarea {
+    padding: 0.8rem 1rem;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.2s;
+    background-color: #f8f9fa;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #4361ee;
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+    background-color: white;
+}
+
+.form-group textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+/* Image Upload Styles */
+.image-upload-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.image-upload-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.current-image {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.current-image label {
+    font-weight: 600;
+    color: #2b2d42;
+    font-size: 0.95rem;
+}
+
+.current-poster {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 8px;
+    border: 2px solid #dee2e6;
+    object-fit: contain;
+    background-color: #f8f9fa;
+    padding: 8px;
+}
+
+.file-upload {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.file-upload label {
+    font-weight: 600;
+    color: #2b2d42;
+    font-size: 0.95rem;
+}
+
+.upload-area {
+    position: relative;
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background-color: #f8f9fa;
+}
+
+.upload-area:hover {
+    border-color: #4361ee;
+    background-color: rgba(67, 97, 238, 0.05);
+}
+
+.upload-area input[type="file"] {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.upload-hint {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    color: #6c757d;
+}
+
+.upload-hint i {
+    font-size: 2rem;
+    color: #4361ee;
+}
+
+/* Button Styles */
+.submit-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.8rem 1.5rem;
+    background-color: #4361ee;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 1rem;
+    border: 2px solid #3a0ca3;
+}
+
+.submit-btn:hover {
+    background-color: #3a0ca3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(58, 12, 163, 0.2);
+}
+
+.submit-btn i {
+    font-size: 1.2rem;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .edit-container {
+        padding: 1rem;
+    }
+    
+    .edit-card {
+        padding: 1.5rem;
+    }
+    
+    .edit-title {
+        font-size: 1.5rem;
+    }
+    
+    .form-group input,
+    .form-group textarea {
+        padding: 0.75rem;
+    }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.edit-card {
+    animation: fadeIn 0.3s ease forwards;
+}
+</style>

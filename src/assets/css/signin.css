@@ -206,3 +206,6 @@ body {
     margin-bottom: 10px; /* Space between title and sign-in heading */
     font-size: 28px; /* Adjust font size as needed */
 }
+.btn-primary:hover {
+    background-color: #8e8e8e;
+  }

@@ -25,13 +25,12 @@ const currentYear = ref(new Date().getFullYear());
 
 <style scoped>
 .footer {
-    background-color: #f8f9fa;
+    background-color: #cfdde5;
     padding: 20px;
     text-align: center;
     position: relative;
     bottom: 0;
     width: 100%;
-    margin-top: 20px;
 }
 
 .social-icons {

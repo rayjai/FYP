@@ -7,9 +7,10 @@
         <div v-else>
     <div class="navigation">
         <ul style="padding-left: 0px;">
-            <li v-for="(item, index) in menuItems" :key="index" @mouseover="setHovered(index)"
-                :class="{ hovered: hoveredIndex === index }">
-                <a href="#" @click.prevent="item.action">
+            <li v-for="(item, index) in menuItems" :key="index"  @mouseover="setHovered(index)" 
+            @mouseleave="resetHover" 
+            :class="{ hovered: hoveredIndex === index }">
+            <a href="#" @click.prevent="selectItem(index, item.action)">
                     <span class="icon">
                         <i :class='item.icon'></i>
                         <ul class="dropdown-menu dropdown-menu-start" aria-labelledby="dropdownMenuLink">
@@ -37,19 +38,23 @@
             </div>
 
             <!-- ======================= Cards ================== -->
-            <div class="cardBox">
-                <div class="card" v-for="(card, index) in cards" :key="index">
-                    <div>
-                        <div class="numbers">{{ card.number }}</div>
-                        <div class="cardName">{{ card.name }}</div>
+            <div class="chartBox">
+                <div class="card">
+                    <MongoDBChart/>
                     </div>
-
-                    <div class="iconBx">
-                        <ion-icon :name="card.icon"></ion-icon>
-                    </div>
+                    <div class="card">
+                    <MongoDBChart2/>
                 </div>
             </div>
+            <div class="chartBox">
+                <div class="card">
+                    <MongoDBChart3/>
+                    </div>
+                    <div class="card">
 
+                    <MongoDBChart4/>
+                </div>
+            </div>
             <div class="holder">
   
 
@@ -84,15 +89,15 @@
         
         <form id="invoiceExForm" @submit.prevent="saveExpenditureRecord">
             <div class="form-group">
-                <label for="Title">Title *</label>
+                <label for="Title">Title<span style="color: red;"> *</span></label>
                 <input type="text" id="Title" required v-model="EXtitle">
             </div>
             <div class="form-group">
-                <label for="Date">Date *</label>
+                <label for="Date">Date<span style="color: red;"> *</span></label>
                 <input type="date" id="Date" required v-model="expenditureDate">
             </div>
             <div class="form-group">
-                <label for="category">Select Category *</label>
+                <label for="category">Select Category<span style="color: red;"> *</span></label>
                 <select id="category" v-model="selectedExpenditureCategory" required>
                     <option v-for="category in categories" :key="category._id" :value="category.category">{{ category.code + ' - ' + category.category }}</option>
                 </select>
@@ -106,7 +111,7 @@
            
             <div class="grid-container7x1">
                 <div class="grid-item">
-                <label for="feeItem">Fee Item *</label>
+                <label for="feeItem">Fee Item<span style="color: red;"> *</span></label>
                 
                 </div>
                 <div class="grid-item">
@@ -115,11 +120,11 @@
                 </div>
             
                 <div class="grid-item">
-                <label for="qty">QTY *</label>
+                <label for="qty">QTY<span style="color: red;"> *</span></label>
                 
                 </div>
                 <div class="grid-item">
-                <label for="unitPrice">Unit $ *</label>
+                <label for="unitPrice">Unit $<span style="color: red;"> *</span></label>
                 </div>
                 <div class="grid-item">
                 <label for="discount">Discount (%)</label>
@@ -184,15 +189,15 @@
         
         <form id="invoiceForm" @submit.prevent="saveIncomeRecord">
             <div class="form-group">
-                <label for="Title">Title *</label>
+                <label for="Title">Title<span style="color: red;"> *</span></label>
                 <input type="text" id="Title" required v-model="title">
             </div>
             <div class="form-group">
-                <label for="Date">Date *</label>
+                <label for="Date">Date<span style="color: red;"> *</span></label>
                 <input type="date" id="Date" required v-model="incomeDate">
             </div>
             <div class="form-group">
-                <label for="category">Select Category *</label>
+                <label for="category">Select Category<span style="color: red;"> *</span></label>
                 <select id="category" v-model="selectedIncomeCategory">
                     <option v-for="category in categories" :key="category._id" :value="category.category">{{ category.code + ' - ' + category.category }}</option>
                 </select>
@@ -206,7 +211,7 @@
            
             <div class="grid-container7x1">
                 <div class="grid-item">
-                <label for="feeItem">Fee Item *</label>
+                <label for="feeItem">Fee Item<span style="color: red;"> *</span></label>
                 
                 </div>
                 <div class="grid-item">
@@ -215,11 +220,11 @@
                 </div>
             
                 <div class="grid-item">
-                <label for="qty">QTY *</label>
+                <label for="qty">QTY<span style="color: red;"> *</span></label>
                 
                 </div>
                 <div class="grid-item">
-                <label for="unitPrice">Unit $ *</label>
+                <label for="unitPrice">Unit $<span style="color: red;"> *</span></label>
                 </div>
                 <div class="grid-item">
                 <label for="discount">Discount (%)</label>
@@ -448,11 +453,11 @@
         
         <form id="FinancialReportForm" @submit.prevent="saveFinancialReport">
           <div class="form-group">
-            <label for="DateFrom">Date From *</label>
+            <label for="DateFrom">Date From<span style="color: red;"> *</span></label>
             <input type="date" id="DateFrom" required v-model="ReportDateFrom">
           </div>
           <div class="form-group">
-            <label for="DateTo">Date To *</label>
+            <label for="DateTo">Date To<span style="color: red;"> *</span></label>
             <input type="date" id="DateTo" required v-model="ReportDateTo">
           </div>
           <div class="form-group">
@@ -512,11 +517,11 @@
         
         <form @submit.prevent="saveNotification">
             <div class="form-group">
-                <label for="notificationTitle">Title *</label>
+                <label for="notificationTitle">Title<span style="color: red;"> *</span></label>
                 <input type="text" id="notificationTitle" v-model="notification.title" required>
             </div>
             <div class="form-group">
-                <label for="notificationMessage">Message *</label>
+                <label for="notificationMessage">Message<span style="color: red;"> *</span></label>
                 <textarea id="notificationMessage" v-model="notification.message" required></textarea>
             </div>
             <button type="submit">Save Notification</button>
@@ -544,6 +549,9 @@
         <button class="btn btn-expenditure" @click="openInventoryModal">
             <i class='bx bx-book-content'></i> Add Inventory Item
         </button>
+        <button class="btn btn-expenditure" @click="generateInventoryCSV" style="margin-left: 10px;">
+            <i class='bx bx-dollar'></i> Export Inventory CSV
+        </button>
     </div>
     <div id="InventoryModal" class="modal">
     <div class="modal-content">
@@ -552,7 +560,7 @@
         
         <form id="InventoryForm" @submit.prevent="saveInventory">
             <div class="form-group">
-        <label for="item-name">Item Name:</label>
+        <label for="item-name">Item Name:<span style="color: red;"> *</span></label>
         <input type="text" id="item-name" name="item-name" required v-model="inventoryItem.name">
     </div>
 
@@ -561,8 +569,8 @@
         <textarea id="description" name="description" rows="4" v-model="inventoryItem.description"></textarea>
     </div>
     <div class="form-group">
-        <label for="category">Select Category:</label>
-        <select id="category" v-model="inventoryItem.category">
+        <label for="category">Select Category:<span style="color: red;"> *</span></label>
+        <select id="category" v-model="inventoryItem.category" required>
             <option value="">All Categories</option>
             <option v-for="category in inventory_categories" :key="category._id" :value="category.category">
                 {{ category.code + ' - ' +category.category  }}
@@ -575,7 +583,7 @@
 
 
     <div class="form-group">
-        <label for="quantity">Quantity:</label>
+        <label for="quantity">Quantity:<span style="color: red;"> *</span></label>
         <input type="number" id="quantity" name="quantity" min="0" required v-model="inventoryItem.quantity">
     </div>
 
@@ -586,21 +594,21 @@
 
     <div class="form-group">
         <label for="purchase-price">Purchase Price:</label>
-        <input type="number" id="purchase-price" name="purchase-price" step="0.01" required v-model="inventoryItem.purchasePrice">
+        <input type="number" id="purchase-price" name="purchase-price" step="0.01" v-model="inventoryItem.purchasePrice">
     </div>
 
     <div class="form-group">
         <label for="current-value">Current Value:</label>
-        <input type="number" id="current-value" name="current-value" step="0.01" required v-model="inventoryItem.currentValue">
+        <input type="number" id="current-value" name="current-value" step="0.01" v-model="inventoryItem.currentValue">
     </div>
 
     <div class="form-group">
-        <label for="location">Location:</label>
+        <label for="location">Location:<span style="color: red;"> *</span></label>
         <input type="text" id="location" name="location" required v-model="inventoryItem.location">
     </div>
 
     <div class="form-group">
-        <label for="condition">Condition:</label>
+        <label for="condition">Condition:<span style="color: red;"> *</span></label>
         <select id="condition" name="condition" required v-model="inventoryItem.condition">
             <option value="">Select Condition</option>
             <option value="new">New</option>
@@ -670,10 +678,7 @@ import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction'
-import { useRouter } from 'vue-router';  //useRoute
-import ProfileSettings from '@/views/ProfileSettings.vue';
-import NotificationSettings from '@/views/NotificationSettings.vue';
-import PrivacySettings from '@/views/PrivacySettings.vue';
+import { useRouter } from 'vue-router';  
 import HomeSettings from '@/views/HomeSettings.vue';
 import AboutUsSettings from '@/views/AboutUsSettings.vue';
 import OthersSettings from '@/views/OthersSettings.vue';
@@ -692,6 +697,12 @@ import 'tippy.js/dist/tippy.css';
 import toastr from 'toastr';
 import 'toastr/build/toastr.min.css'; 
 import Chatbot from '@/components/Chatbot.vue';
+import MongoDBChart from '@/components/MongoChart.vue';
+import MongoDBChart2 from '@/components/MongoChart2.vue';
+import MongoDBChart3 from '@/components/MongoChart3.vue';
+import MongoDBChart4 from '@/components/MongoChart4.vue';
+import * as XLSX from 'xlsx';
+
 
 
 
@@ -835,15 +846,29 @@ watch([totalIncome, totalExpenditure], () => {
 });
 
 const hoveredIndex = ref(null);
-const isActive = ref(false);
+const selectedIndex = ref(1); // To keep track of the selected item
 
 function setHovered(index) {
     hoveredIndex.value = index;
 }
 
+function resetHover() {
+    hoveredIndex.value = selectedIndex.value; // Revert to the selected item
+}
+
+function selectItem(index, action) {
+    selectedIndex.value = index; // Set the selected index
+    action(); // Execute the action associated with the item
+}
+
 function toggleMenu() {
     isActive.value = !isActive.value;
 }
+
+
+// Set the initially selected index (optional)
+selectedIndex.value = 1; // Change this to the index of the initially selected item
+
 
 const ContentSetting = ref('home')
 
@@ -1615,6 +1640,7 @@ const saveInventory = async () => {
         localStorage.setItem('toastrMessage', 'Inventory record added successfully!');
         
         closeInventoryModal(); // Close modal after saving
+        resetInventoryForm();
         await fetchInventoryItems(); // Refresh the inventory items list
     } catch (error) {
         console.error('Error saving inventory item:', error);
@@ -1648,6 +1674,23 @@ const inventoryColumnDefs = [
       { headerName: "Condition", field: "condition", sortable: true, filter: true },
     ];
 
+    const generateInventoryCSV = () => {
+    // Create a new workbook
+    const wb = XLSX.utils.book_new();
+
+    // Convert your inventory records into a worksheet
+    const ws = XLSX.utils.json_to_sheet(inventoryRecords.value);
+
+    // Append the worksheet to the workbook
+    XLSX.utils.book_append_sheet(wb, ws, 'Inventory');
+
+    // Generate a file name
+    const fileName = `Inventory_${new Date().toLocaleDateString()}.xlsx`;
+
+    // Write the workbook and trigger a download
+    XLSX.writeFile(wb, fileName);
+};
+
 const fetchData = async () => {
     await Promise.all([
         fetchMembers(),
@@ -1664,6 +1707,7 @@ const fetchData = async () => {
         fetchCategories(),
         fetchInventoryCategories(),
         fetchInventoryItems(),
+        setHovered(1)
     ]);
 };
 

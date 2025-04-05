@@ -3,6 +3,10 @@
         <h2>Home Page content</h2>
         <form @submit.prevent="handleSubmit"> <!-- Bind the submit event -->
             <div class="form-group">
+                <label for="tagLine">tagLine</label>
+                <textarea id="tagLine" v-model="club.tagLine" rows="4"></textarea> <!-- Use textarea -->
+            </div>
+            <div class="form-group">
                 <label for="description">Description</label>
                 <textarea id="description" v-model="club.description" rows="4"></textarea> <!-- Use textarea -->
             </div>
@@ -120,6 +124,7 @@ const handleSubmit = async () => { // Declare as async
     const formData = new FormData();
     
     formData.append('description', club.value.description); // Use club.value.description
+    formData.append('tagLine', club.value.tagLine); // Use club.value.description
 
     // Append the files to the correct database field names
     if (poster1.value) formData.append('eventPoster1', poster1.value);

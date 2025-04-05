@@ -1,0 +1,75 @@
+/* Base Button Styles (shared by both) */
+.btn-one, .btn-two {
+    color: white;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    padding: 0.5rem 1.25rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    vertical-align: middle;
+  }
+  
+  /* Remove underline for link buttons */
+  a.btn-one, a.btn-two {
+    text-decoration: none !important;
+  }
+  
+  /* Hover/Focus States (shared animation) */
+  .btn-one:hover, .btn-one:focus,
+  .btn-two:hover, .btn-two:focus {
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  /* Active State (shared animation) */
+  .btn-one:active,
+  .btn-two:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Button One Specific Colors */
+  .btn-one {
+    background-color: #4a6fa5;
+    border-color: #4a6fa5;
+  }
+  
+  .btn-one:hover,
+  .btn-one:focus {
+    background-color: #3a5a8f;
+    border-color: #3a5a8f;
+  }
+  
+  .btn-one:active {
+    background-color: #2d4a7a;
+    border-color: #2d4a7a;
+  }
+  
+  /* Button Two Specific Colors */
+  .btn-two {
+    background-color: #e74c3c;
+    border-color: #e74c3c;
+  }
+  
+  .btn-two:hover,
+  .btn-two:focus {
+    background-color: #c0392b;
+    border-color: #c0392b;
+  }
+  
+  .btn-two:active {
+    background-color: #a33125;
+    border-color: #a33125;
+  }
+  
+  

@@ -82,14 +82,6 @@ const router = createRouter({
       }
     },
     {
-      path: '/finance',
-      name: 'finance',
-      component: () => import('../views/FinanceView.vue'),
-      meta: {
-        requiresAuth: true // Add meta field to indicate protected route
-      }
-    },
-    {
       path: '/eventnew',
       name: 'eventnew',
       component: () => import('../views/EventNewView.vue'),
@@ -184,6 +176,11 @@ const router = createRouter({
       path: '/reset-password/:id',
       name: 'Resetpassword',
       component: () => import('../views/ResetPassword.vue'),
+    },
+    {
+      path: '/event/registration/detail/:id',
+      name: 'EventRegistrationDetail',
+      component: () => import('../views/EventRegistrationDetail.vue'),
     },
   ]
 });

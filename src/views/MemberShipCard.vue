@@ -40,6 +40,13 @@
                     <span class="detail-label">Gender:</span>
                     <span class="detail-value">{{ member.gender }}</span>
                 </div>
+                <div class="detail-row">
+        <i class='bx bx-calendar'></i>
+        <span class="detail-label">Expiry Date:</span>
+        <span class="detail-value">
+            {{ formatDate(member.expiry_date) || 'N/A' }}
+        </span>
+    </div>
             </div>
             
             <div class="card-footer">
@@ -72,6 +79,11 @@ export default {
         const member = ref({});
         const clubLogo = ref('/default-club-logo.png'); // Replace with your logo path
 
+        const formatDate = (dateString) => {
+            if (!dateString) return null;
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return new Date(dateString).toLocaleDateString(undefined, options);
+        };
         const getinfo = async () => {
             if (localStorage.getItem('token')) {
                 const token = localStorage.getItem('token');
@@ -83,6 +95,7 @@ export default {
                     studentid: student.value.student_id,
                     email: student.value.email,
                     gender: student.value.gender,
+                    expiry_date: student.value.expiry_date 
                 };
             }
         };
@@ -111,7 +124,8 @@ export default {
             member,
             qrData,
             clubLogo,
-            downloadCard
+            downloadCard,
+            formatDate
         };
     }
 };
@@ -329,4 +343,5 @@ export default {
         padding: 0 1.2rem 1.2rem;
     }
 }
+
 </style>

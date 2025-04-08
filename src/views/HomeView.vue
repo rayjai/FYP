@@ -180,7 +180,7 @@ onMounted(() => {
 
     <!-- Club Description -->
     <section class="description-section">
-      <div class="container">
+      <div class="home-container">
         <div class="description-card">
           <p class="description-text">{{ content.description }}</p>
           <p class="welcome-text">Welcome to join us!</p>
@@ -190,7 +190,7 @@ onMounted(() => {
 
     <!-- Membership CTA -->
     <section class="membership-cta">
-      <div class="container">
+      <div class="home-container">
         <h2>Become a Member!</h2>
         <p>Join our club to participate in exciting events and activities!</p>
         <router-link to="/signup" class="cta-btn">Join Now</router-link>
@@ -199,7 +199,7 @@ onMounted(() => {
 
     <!-- Upcoming Events -->
     <section class="events-section">
-      <div class="container">
+      <div class="home-container">
         <h2 class="section-title">Upcoming Events</h2>
         
         <div v-if="upcomingevents.length <= 0" class="no-events">
@@ -260,7 +260,7 @@ onMounted(() => {
   height: 80px;
 }
 
-.container {
+.home-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
@@ -465,7 +465,12 @@ onMounted(() => {
   transform: translateY(-10px);
   box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
 }
-
+.event-card a, 
+.event-card a:hover, 
+.event-card a:focus, 
+.event-card a:visited {
+  text-decoration: none !important;
+}
 .card-image {
   position: relative;
   height: 200px;

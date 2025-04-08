@@ -129,7 +129,7 @@ onMounted(async () => {
 
 </script>
 
-<style scoped>
+<style>
 @import 'bootstrap/dist/css/bootstrap.min.css';
 </style>
 

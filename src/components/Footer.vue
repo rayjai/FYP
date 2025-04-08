@@ -1,7 +1,7 @@
 <template>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <footer class="footer">
-        <div class="container">
+        <div>
             <p>&copy; {{ currentYear }} Computer Science Society. All rights reserved.</p>
             <p>Join us for exciting events and activities!</p>
             <p>Contact us: <a href="mailto:info@cssociety.com">info@cssociety.com</a></p>
@@ -23,7 +23,7 @@ import { ref } from 'vue';
 const currentYear = ref(new Date().getFullYear());
 </script>
 
-<style scoped>
+<style>
 .footer {
     background-color: #cfdde5;
     padding: 20px;

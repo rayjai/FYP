@@ -72,6 +72,18 @@
               </label>
             </div>
           </div>
+          <div class="form-group">
+  <label>Expiry Date</label>
+  <div v-if="!isEditing" class="detail-field">
+    {{ record.expiry_date ? formatDate(record.expiry_date) : 'N/A' }}
+  </div>
+  <input 
+    v-else 
+    v-model="editedRecord.expiry_date" 
+    type="date" 
+    class="form-input"
+  />
+</div>
         </div>
 
         <div class="detail-section">
@@ -173,7 +185,9 @@ onMounted(async () => {
     editedRecord.value = { 
       ...record.value,
       gender: record.value.gender,
-      access: record.value.access
+      access: record.value.access,
+      expiry_date: record.value.expiry_date ? formatDateForInput(record.value.expiry_date) : ''
+
     };
     fetchRegisteredEvents();
   } catch (error) {
@@ -181,6 +195,11 @@ onMounted(async () => {
     toastr.error('Failed to load member details');
   }
 });
+const formatDateForInput = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toISOString().split('T')[0];
+};
 
 async function fetchRegisteredEvents() {
   const recordId = studentid.value;

@@ -68,11 +68,14 @@ const closeNotificationDialog = () => {
 };
 
 
+
 const toggleModal = () => {
-  const modal = document.querySelector('.notification-modal');
-  showModal.value = !showModal.value;
+  showModal.value = !showModal.value; // Update modal visibility
   nextTick(() => {
-    modal.classList.toggle('show', showModal.value);
+    const modal = document.querySelector('.notification-modal');
+    if (modal) {
+      modal.classList.toggle('show', showModal.value);
+    }
   });
 };
 const closeModal = () => {
@@ -115,6 +118,31 @@ async function fetchHomeContent() {
     console.error('Error fetching home events:', error);
   }
 };
+
+const deleteNotification = async (notificationId) => {
+  try {
+    const response = await fetch(`/api/notifications/${notificationId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+
+    if (response.ok) {
+      // Remove the deleted notification from the local state
+      notifications.value = notifications.value.filter(notification => notification._id !== notificationId);
+      closeNotificationDialog(); // Close the dialog after deletion
+      localStorage.setItem('toastrMessage', 'Notification deleted successfully');
+    } else {
+      const errorData = await response.json();
+      alert(`Error deleting notification: ${errorData.message}`);
+    }
+  } catch (error) {
+    console.error('Error deleting notification:', error);
+    toastr.error('An error occurred while deleting the notification');
+  }
+};
+
 
 
 onMounted(async () => {
@@ -207,6 +235,10 @@ onMounted(async () => {
     <h2>{{ selectedNotification?.title }}</h2>
     <p>{{ selectedNotification?.message }}</p>
     <small style="color: grey;">{{ formatDate(selectedNotification?.createdAt) }}</small>
+    <!-- Delete button for admin only -->
+    <button v-if="isAdmin" class="btn btn-danger mt-3" @click="deleteNotification(selectedNotification._id)">
+      Delete Notification
+    </button>
   </div>
 </div>
 
@@ -430,6 +462,7 @@ export default {
   justify-content: center;
   align-items: center;
   z-index: 1100;
+  
 }
 
 .dialog-content {
@@ -439,6 +472,9 @@ export default {
   max-width: 500px;
   width: 90%;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
 .close-button {

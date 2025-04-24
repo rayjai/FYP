@@ -222,7 +222,7 @@ if (message) {
                       <i class='bx bx-qr-scan'></i>
                     </a>
                     <button 
-                      @click.stop="confirmDelete(event._id)" 
+                      @click.prevent.stop="confirmDelete(event._id)" 
                       class="btn-icon danger"
                       title="Delete event"
                     >
@@ -414,7 +414,7 @@ if (message) {
 /* Events Grid */
 .events-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 30px;
   margin-bottom: 40px;
   position: relative;
@@ -650,7 +650,52 @@ if (message) {
     padding: 20px 15px;
   }
 }
-/* [Previous styles remain the same, just add these additions] */
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  .events-grid {
+    gap: 20px;
+  }
+  
+  .event-image-container {
+    height: 180px;
+  }
+}
+
+@media (max-width: 768px) {
+  .events-grid {
+    gap: 15px;
+  }
+  
+  .event-content {
+    padding: 15px;
+  }
+  
+  .event-title {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .events-grid {
+    grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  margin-bottom: 30px;
+  }
+  
+  /* Show 6 events in 2x3 grid on mobile */
+  .event-card:nth-child(n+7) {
+    display: none;
+  }
+  
+  .event-image-container {
+    height: 160px;
+  }
+  
+  .event-date-badge {
+    font-size: 0.8rem;
+    padding: 3px 10px;
+  }
+}
 
 /* Button Spacing */
 .admin-actions,

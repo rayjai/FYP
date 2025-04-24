@@ -268,13 +268,7 @@ const deleteRecord = async () => {
   }
 };
 
-// Initialize toastr options
-toastr.options = {
-  closeButton: true,
-  progressBar: true,
-  positionClass: 'toast-top-right',
-  timeOut: 3000
-};
+
 </script>
 
 <style scoped>

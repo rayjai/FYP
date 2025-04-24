@@ -92,6 +92,7 @@ const deletePost = async (postId) => {
 
         if (response.ok) {
             posts.value = posts.value.filter(post => post.id !== postId);
+            localStorage.setItem('toastrMessage', 'Post deleted Successfully!');
             location.reload();
         } else {
             const errorData = await response.json();

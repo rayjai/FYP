@@ -199,13 +199,7 @@ const showConfirmDelete = ref(false);
 const admins = ref([]);
 const categories = ref([]);
 
-// Initialize toastr
-toastr.options = {
-  closeButton: true,
-  progressBar: true,
-  positionClass: 'toast-top-right',
-  timeOut: 3000
-};
+
 
 const formatDate = (dateString) => {
   const options = { year: 'numeric', month: 'short', day: 'numeric' };

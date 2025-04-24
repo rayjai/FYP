@@ -101,22 +101,33 @@ export default {
         };
 
         const qrData = computed(() => JSON.stringify(member.value));
-
+        
         const downloadCard = async () => {
-            const card = document.querySelector('.membership-card');
-            try {
-                const canvas = await html2canvas(card, {
-                    backgroundColor: null,
-                    scale: 2 // Higher quality
-                });
-                const link = document.createElement('a');
-                link.download = `membership-card-${member.value.studentid}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-            } catch (error) {
-                console.error('Error generating card:', error);
-            }
-        };
+    const card = document.querySelector('.membership-card');
+
+    card.classList.add('no-hover');
+
+    try {
+        const canvas = await html2canvas(card, {
+            backgroundColor: '#ffffff', // Explicit white background
+            scale: 4, // Higher scale for better quality
+            logging: true, // Helpful for debugging
+            useCORS: true // If you're using external images
+        });
+
+        const link = document.createElement('a');
+        link.download = `membership-card-${member.value.studentid}.png`;
+        link.href = canvas.toDataURL('image/png', 1.0); // Set quality to 1.0 for full opacity
+        link.click();
+    } catch (error) {
+        console.error('Error generating card:', error);
+    }
+    finally {
+        // Remove the class after download
+        card.classList.remove('no-hover');
+    }
+};
+
 
         onMounted(getinfo);
 
@@ -152,7 +163,6 @@ export default {
     position: relative;
     transform-style: preserve-3d;
     transition: all 0.3s ease;
-    animation: cardEntrance 0.6s ease-out;
 }
 
 .membership-card:hover {
@@ -342,6 +352,10 @@ export default {
     .member-details {
         padding: 0 1.2rem 1.2rem;
     }
+}
+.no-hover:hover {
+    transform: none; /* Disable hover transform */
+    box-shadow: none; /* Disable hover shadow */
 }
 
 </style>

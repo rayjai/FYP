@@ -6,9 +6,21 @@
       <div class="scanner-card">
         <h1 class="scanner-title">Scan Student Membership QR Code</h1>
         
-        <div class="scanner-wrapper">
-          <div id="reader" class="qr-scanner"></div>
-          
+        <!-- Add manual input toggle -->
+        <div class="input-toggle">
+          <button 
+  @click="toggleInputMode" 
+  class="toggle-button"
+  :disabled="isProcessing"
+>
+  {{ useManualInput ? 'Switch to QR Scanner' : 'Enter Student ID Manually' }}
+  <span v-if="isProcessing" class="toggle-processing"></span>
+</button>
+        </div>
+        
+        <!-- QR Scanner Section -->
+        <div v-if="!useManualInput" class="scanner-wrapper">
+          <div id="reader" class="qr-scanner" ref="qrScannerElement"></div>          
           <div class="scanner-controls">
             <button 
               @click="isScanning ? stopScanning() : startScanning()" 
@@ -18,6 +30,30 @@
             </button>
           </div>
         </div>
+        
+        <!-- Manual Input Section -->
+        <div v-else class="manual-input-section">
+  <div class="input-group">
+    <label for="studentId">Student ID:</label>
+    <input 
+      id="studentId" 
+      v-model="manualStudentId" 
+      type="text" 
+      placeholder="Enter student ID"
+      @keyup.enter="fetchStudentData"
+      :disabled="isProcessing"
+      ref="manualInput"
+    />
+  </div>
+  <button 
+    @click="fetchStudentData" 
+    class="fetch-button"
+    :disabled="!manualStudentId || isProcessing"
+  >
+    <span v-if="!isProcessing">Fetch Student Data</span>
+    <span v-else class="processing-spinner">Fetching...</span>
+  </button>
+</div>
         
         <div v-if="scannedData" class="student-info-card">
           <h2>Student Information</h2>
@@ -41,17 +77,26 @@
           </div>
           
           <button 
-            @click="confirmAttendance" 
-            class="confirm-button"
-            :disabled="isProcessing"
-          >
-            <span v-if="!isProcessing">Confirm Attendance</span>
-            <span v-else class="processing-spinner">Processing...</span>
-          </button>
-          
-          <div v-if="attendanceResult" class="result-message" :class="attendanceResult.success ? 'success' : 'error'">
-            {{ attendanceResult.message }}
-          </div>
+  @click="confirmAttendance" 
+  class="confirm-button"
+  :disabled="isProcessing || !scannedData?.isConfirmed || scannedData?.isAttendanceTaken"
+>
+  <span v-if="!isProcessing">Confirm Attendance</span>
+  <span v-else class="processing-spinner">Processing...</span>
+</button>
+
+<!-- Replace all message divs with this single one -->
+<div v-if="attendanceResult" class="result-message" 
+       :class="{
+         'success': attendanceResult.success,
+         'error': attendanceResult.isError,
+         'warning': attendanceResult.notConfirmed
+       }">
+    <i v-if="attendanceResult.success" class="fas fa-check-circle"></i>
+    <i v-if="attendanceResult.isError" class="fas fa-exclamation-circle"></i>
+    <i v-if="attendanceResult.notConfirmed" class="fas fa-exclamation-triangle"></i>
+    {{ attendanceResult.message }}
+  </div>
         </div>
       </div>
     </div>
@@ -76,7 +121,89 @@
       const attendanceResult = ref(null);
       const route = useRoute();
       const eventId = route.params.id;
+      const useManualInput = ref(false);
+    const manualStudentId = ref('');
+
+    const fetchStudentData = async () => {
+      if (!manualStudentId.value.trim()) {
+        attendanceResult.value = {
+          success: false,
+          message: 'Please enter a valid student ID',
+          isError: true
+        };
+        return;
+      }
+
+      isProcessing.value = true;
+      attendanceResult.value = null;
+
+      try {
+        // First check registration status
+        const regResponse = await fetch(`/api/registration-status/${eventId}/${manualStudentId.value}`);
+        const regResult = await regResponse.json();
+
+        if (!regResult.success) {
+          attendanceResult.value = {
+            success: false,
+            message: regResult.message,
+            isError: true
+          };
+          return;
+        }
+
+        // If registered, fetch student details
+        const studentResponse = await fetch(`/api/student/${manualStudentId.value}`);
+        const studentData = await studentResponse.json();
+
+        if (!studentResponse.ok) {
+          throw new Error(studentData.message || 'Failed to fetch student data');
+        }
+
+        scannedData.value = {
+          name: studentData.english_name,
+          email: studentData.email,
+          studentid: studentData.student_id,
+          gender: studentData.gender,
+          isConfirmed: regResult.isConfirmed,
+          isAttendanceTaken: regResult.isAttendanceTaken
+        };
+
+        // Set appropriate status message
+        if (regResult.isAttendanceTaken) {
+          attendanceResult.value = {
+            success: true,
+            message: `${studentData.name}'s attendance was already confirmed`
+          };
+        } else if (!regResult.isConfirmed) {
+          attendanceResult.value = {
+            success: false,
+            message: 'Registration not confirmed by admin',
+            notConfirmed: true
+          };
+        }
+      } catch (error) {
+        console.error("Error fetching student data:", error);
+        attendanceResult.value = {
+          success: false,
+          message: error.message || 'Failed to fetch student information',
+          isError: true
+        };
+      } finally {
+        isProcessing.value = false;
+      }
+    };
+
+
+    const toggleInputMode = async () => {
+  if (isProcessing.value) return;
   
+  // Clear previous data
+  scannedData.value = null;
+  attendanceResult.value = null;
+  
+  // Toggle the mode
+  useManualInput.value = !useManualInput.value;
+};
       const startScanning = () => {
         html5QrCode.value = new Html5Qrcode("reader");
         const config = {
@@ -109,31 +236,81 @@
         }
       };
   
-      const onScanSuccess = (decodedText) => {
-        try {
-          scannedData.value = JSON.parse(decodedText);
-          stopScanning();
-        } catch (e) {
-          console.error("Invalid QR code data", e);
-          scannedData.value = null;
-        }
+      const onScanSuccess = async (decodedText) => {
+  try {
+    const data = JSON.parse(decodedText);
+    // First preserve the scanned QR code data
+    scannedData.value = {
+      ...data,
+      isConfirmed: false,
+      isAttendanceTaken: false
+    };
+    stopScanning();
+    
+    isProcessing.value = true;
+    const response = await fetch(`/api/registration-status/${eventId}/${data.studentid}`);
+    const result = await response.json();
+    
+    if (!result.success) {
+      // For NOT_REGISTERED errors, keep the scanned data but show error
+      attendanceResult.value = {
+        success: false,
+        message: result.message,
+        isError: true,
+        showWithData: true  // New flag to show with student data
       };
+      return;
+    }
+
+    // Update with registration status
+    scannedData.value = {
+      ...scannedData.value,
+      isConfirmed: result.isConfirmed,
+      isAttendanceTaken: result.isAttendanceTaken
+    };
+
+    // Set appropriate status message
+    if (result.isAttendanceTaken) {
+      attendanceResult.value = {
+        success: true,
+        message: `${data.name}'s attendance was already confirmed`
+      };
+    } else if (!result.isConfirmed) {
+      attendanceResult.value = {
+        success: false,
+        message: 'Registration not confirmed by admin',
+        notConfirmed: true
+      };
+    }
+  } catch (e) {
+    console.error("QR code processing error:", e);
+    attendanceResult.value = {
+      success: false,
+      message: e.message || 'Failed to process registration',
+      isError: true,
+      showWithData: true
+    };
+  } finally {
+    isProcessing.value = false;
+  }
+};
   
       const onScanError = (errorMessage) => {
         console.warn("QR Code scan error:", errorMessage);
       };
   
+ 
       const confirmAttendance = async () => {
   if (!scannedData.value?.studentid) {
     attendanceResult.value = {
       success: false,
-      message: 'No valid student data scanned'
+      message: 'No valid student data scanned',
+      isError: true
     };
     return;
   }
 
   isProcessing.value = true;
-  attendanceResult.value = null;
 
   try {
     const response = await fetch(`/api/attendance/${eventId}/${scannedData.value.studentid}`, {
@@ -144,20 +321,22 @@
 
     const result = await response.json();
 
-    if (response.status === 208) { // Already confirmed
+    if (response.status === 208) {
+      scannedData.value.isAttendanceTaken = true;
       attendanceResult.value = {
         success: true,
         message: `${scannedData.value.name}'s attendance was already confirmed`
       };
     } 
     else if (response.ok) {
+      scannedData.value.isAttendanceTaken = true;
       attendanceResult.value = {
         success: true,
         message: `Attendance confirmed for ${scannedData.value.name}`
       };
-      // Reset after successful confirmation
       setTimeout(() => {
         scannedData.value = null;
+        attendanceResult.value = null;
         startScanning();
       }, 2000);
     } else {
@@ -166,12 +345,17 @@
   } catch (error) {
     attendanceResult.value = {
       success: false,
-      message: error.message || 'An error occurred while confirming attendance'
+      message: error.message || 'An error occurred while confirming attendance',
+      isError: true
     };
   } finally {
     isProcessing.value = false;
   }
 };
+
+
+
+
   
       return {
         scannedData,
@@ -180,7 +364,11 @@
         attendanceResult,
         startScanning,
         stopScanning,
-        confirmAttendance
+        confirmAttendance,
+        fetchStudentData,
+        useManualInput,
+      manualStudentId,
+      toggleInputMode
       };
     },
     mounted() {
@@ -188,7 +376,26 @@
     },
     beforeUnmount() {
       this.stopScanning();
+    },
+    watch: {
+  useManualInput(newVal) {
+    if (newVal) {
+      // Switching to manual input
+      this.stopScanning();
+      this.scannedData = null;
+      this.attendanceResult = null;
+      this.$nextTick(() => {
+        this.$refs.manualInput?.focus();
+      });
+    } else {
+      // Switching back to QR scanning
+      this.manualStudentId = '';
+      this.$nextTick(() => {
+        this.startScanning();
+      });
     }
+  }
+}
   };
   </script>
   
@@ -388,4 +595,80 @@
       grid-template-columns: 1fr;
     }
   }
+  .result-message.warning {
+  background-color: #fff3e0;
+  color: #ff9800;
+  border: 1px solid #ffe0b2;
+}
+
+.result-message i {
+  margin-right: 8px;
+}
+
+
+.input-toggle {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.toggle-button {
+  padding: 10px 15px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.toggle-button:hover {
+  background-color: #5a6268;
+}
+
+.manual-input-section {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.input-group label {
+  font-weight: 600;
+  color: #555;
+}
+
+.input-group input {
+  padding: 10px 15px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.fetch-button {
+  padding: 12px;
+  background-color: #17a2b8;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.fetch-button:hover:not(:disabled) {
+  background-color: #138496;
+  transform: translateY(-2px);
+}
+
+.fetch-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
   </style>

@@ -316,9 +316,11 @@
       <h3>AI Chatbot</h3>
     </div>
     <div class="chatbot-messages" ref="messagesContainer">
-      <div v-for="message in messages" :key="message.id" :class="{'user-message': message.user, 'bot-message': !message.user}">
-        {{ message.text }}
-      </div>
+        <div v-for="message in messages" :key="message.id" 
+     :class="{'user-message': message.user, 'bot-message': !message.user}">
+  <span v-if="message.user">{{ message.text }}</span>
+  <span v-else v-html="message.text"></span>
+</div>
       <div v-if="loading" class="loading">Typing...</div> <!-- Loading indicator -->
     </div>
     <div class="preset-questions">
@@ -523,6 +525,10 @@
             <div class="form-group">
                 <label for="notificationMessage">Message<span style="color: red;"> *</span></label>
                 <textarea id="notificationMessage" v-model="notification.message" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="notificationExpiry">Expiry Date<span style="color: red;"> *</span></label>
+                <input type="date" id="notificationExpiry" v-model="notification.expiry_date" required>
             </div>
             <button type="submit">Save Notification</button>
         </form>
@@ -792,33 +798,11 @@ const fetchEarning = async () => {
     }
 };
 
-const totalCommentsCount = ref(0); // Reactive variable to store total comment count
 
-const fetchTotalCommentsCount = async () => {
-    try {
-        const response = await axios.get('/api/posts/comments/count');
-        totalCommentsCount.value = response.data.totalCommentsCount; // Set the total comment count
-    } catch (error) {
-        console.error('Error fetching total comments count:', error);
-    }
-};
-const todayRegistrationCount = ref(0); // Reactive variable to store today's registration count
-
-const fetchTodayRegistrationCount = async () => {
-    try {
-        const response = await axios.get('/api/registrations/today/count');
-        todayRegistrationCount.value = response.data.count; // Set the count
-    } catch (error) {
-        console.error('Error fetching today\'s registration count:', error);
-    }
-};
 
 const membersData = ref([]);
 
-const data = [
-    [1, 2],
-    [3, 4],
-];
+
 
 const menuItems = ref([
     { title: 'Student Club', icon: 'bx bx-desktop', action: () => router.push('/home') },
@@ -829,21 +813,8 @@ const menuItems = ref([
     { title: 'Settings', icon: 'bx bx-cog', action: GoPassword },
 ]);
 
-const cards = ref([
-    { number: todayRegistrationCount, name: 'Daily Event Registered', icon: 'eye-outline' },
-    { number: memberCount, name: 'Members', icon: 'cart-outline' },
-    { number: totalCommentsCount, name: 'Comments', icon: 'chatbubbles-outline' },
-    { number: earnings.value.toLocaleString('en-US', { style: 'currency', currency: 'USD' }), name: 'Earnings', icon: 'cash-outline' },
-]);
 
-const customers = ref([
-    { img: '/src/assets/student_club1.png', name: 'David', country: 'Italy' },
-    { img: '/src/assets/student_club2.png', name: 'Amit', country: 'India' },
-]);
 
-watch([totalIncome, totalExpenditure], () => {
-    cards.value[3].number = earnings.value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-});
 
 const hoveredIndex = ref(null);
 const selectedIndex = ref(1); // To keep track of the selected item
@@ -1212,68 +1183,70 @@ watch(isFinance, (newValue) => {
 let incomeChart = null; // Store the chart instance
 
 async function renderIncomeChart() {
-    const month = 3; // March
-    const year = 2025;
-    const records = await fetchIncomeRecordsChart(month, year);
-    
-    console.log('Fetched Records:', records); // Check fetched records
-
-    // Aggregate income records by day
-    const incomeByDay = aggregateIncome(records);
-    console.log('Aggregated Income by Day:', incomeByDay); // Check aggregation
-
-    // Calculate the number of days in the month
-    const daysInMonth = new Date(year, month, 0).getDate();
-    
-    // Prepare chart data
-    const { labels, data } = prepareChartData(incomeByDay, daysInMonth);
-    console.log('Chart Labels:', labels); // Check labels
-    console.log('Chart Data:', data); // Check data
-
-    const ctx = document.getElementById('incomeChart');
-    if (!ctx) {
-        console.error('Canvas element not found!');
-        return; // Exit early if the canvas is not found
-    }
-
-    const context = ctx.getContext('2d');
-
-     incomeChart = new Chart(context, {
-        responsive: true,
-        maintainAspectRatio: true,
-        type: 'line',
-        data: {
-            labels: labels, // Use prepared labels
-            datasets: [{
-                label: 'Income Flow',
-                data: data, // Use prepared data
-                borderColor: 'rgba(75, 192, 192, 1)',
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                fill: true,
-            }]
-        },
-        options: {
-            scales: {
-                x: {
-                    type: 'category', // Specify the scale type for x-axis
-                },
-                y: {
-                    type: 'linear', // Specify the scale type for y-axis
-                    beginAtZero: true
-                }
-            },
+    try {
+        const month = new Date().getMonth() + 1; // Current month
+        const year = new Date().getFullYear(); // Current year
+        const records = await fetchIncomeRecordsChart(month, year);
         
-            plugins: {
-                title: {
-                    display: true,
-                    text: `Income Records for ${new Date(year, month - 1).toLocaleString('default', { month: 'long' })} ${year}`,
-                    font: {
-                        size: 18
+        // Wait for next tick to ensure DOM is updated
+        await nextTick();
+        
+        // Check if canvas exists
+        const ctx = document.getElementById('incomeChart');
+        if (!ctx) {
+            console.error('Income chart canvas not found!');
+            return;
+        }
+
+        // Destroy existing chart if it exists
+        if (incomeChart instanceof Chart) {
+            incomeChart.destroy();
+        }
+
+        // Aggregate and prepare data
+        const incomeByDay = aggregateIncome(records);
+        const daysInMonth = new Date(year, month, 0).getDate();
+        const { labels, data } = prepareChartData(incomeByDay, daysInMonth);
+
+        // Create new chart
+        incomeChart = new Chart(ctx, {
+            responsive: true,
+            maintainAspectRatio: true,
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Income Flow',
+                    data: data,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    fill: true,
+                }]
+            },
+            options: {
+                scales: {
+                    x: {
+                        type: 'category',
                     },
+                    y: {
+                        type: 'linear',
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: `Income Records for ${new Date(year, month - 1).toLocaleString('default', { month: 'long' })} ${year}`,
+                        font: {
+                            size: 18
+                        }
+                    }
                 }
             }
-        }
-    });
+        });
+    } catch (error) {
+        console.error('Error rendering income chart:', error);
+    }
 }
 
 
@@ -1424,67 +1397,70 @@ watch(isFinance, (newValue) => {
 let expenditureChart = null; // Store the chart instance
 
 async function renderExpenditureChart() {
-    const month = 3; // March
-    const year = 2025;
-    const records = await fetchExpenditureRecordsChart(month, year);
-    
-    console.log('Fetched Records:', records); // Check fetched records
+    try {
+        const month = new Date().getMonth() + 1; // Current month
+        const year = new Date().getFullYear(); // Current year
+        const records = await fetchExpenditureRecordsChart(month, year);
+        
+        // Wait for next tick to ensure DOM is updated
+        await nextTick();
+        
+        // Check if canvas exists
+        const ctx = document.getElementById('expenditureChart');
+        if (!ctx) {
+            console.error('Expenditure chart canvas not found!');
+            return;
+        }
 
-    // Aggregate income records by day
-    const incomeByDay = aggregateExpenditure(records);
-    console.log('Aggregated Income by Day:', incomeByDay); // Check aggregation
+        // Destroy existing chart if it exists
+        if (expenditureChart instanceof Chart) {
+            expenditureChart.destroy();
+        }
 
-    // Calculate the number of days in the month
-    const daysInMonth = new Date(year, month, 0).getDate();
-    
-    // Prepare chart data
-    const { labels, data } = prepareChartData(incomeByDay, daysInMonth);
-    console.log('Chart Labels:', labels); // Check labels
-    console.log('Chart Data:', data); // Check data
+        // Aggregate and prepare data
+        const expenditureByDay = aggregateExpenditure(records);
+        const daysInMonth = new Date(year, month, 0).getDate();
+        const { labels, data } = prepareChartData(expenditureByDay, daysInMonth);
 
-    const ctx = document.getElementById('expenditureChart');
-    if (!ctx) {
-        console.error('Canvas element not found!');
-        return; // Exit early if the canvas is not found
-    }
-
-    const context = ctx.getContext('2d');
-
-     expenditureChart = new Chart(context, {
-        responsive: true,
-        maintainAspectRatio: true,
-        type: 'line',
-        data: {
-            labels: labels, // Use prepared labels
-            datasets: [{
-                label: 'Income Flow',
-                data: data, // Use prepared data
-                borderColor: 'rgba(75, 192, 192, 1)',
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                fill: true,
-            }]
-        },
-        options: {
-            scales: {
-                x: {
-                    type: 'category', // Specify the scale type for x-axis
-                },
-                y: {
-                    type: 'linear', // Specify the scale type for y-axis
-                    beginAtZero: true
-                }
+        // Create new chart
+        expenditureChart = new Chart(ctx, {
+            responsive: true,
+            maintainAspectRatio: true,
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Expenditure Flow',
+                    data: data,
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    fill: true,
+                }]
             },
-            plugins: {
-                title: {
-                    display: true,
-                    text: `Expenditure Records for ${new Date(year, month - 1).toLocaleString('default', { month: 'long' })} ${year}`,
-                    font: {
-                        size: 18
+            options: {
+                scales: {
+                    x: {
+                        type: 'category',
+                    },
+                    y: {
+                        type: 'linear',
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: `Expenditure Records for ${new Date(year, month - 1).toLocaleString('default', { month: 'long' })} ${year}`,
+                        font: {
+                            size: 18
+                        }
                     }
                 }
             }
-        }
-    });
+        });
+    } catch (error) {
+        console.error('Error rendering expenditure chart:', error);
+    }
 }
 async function renderFilterExpenditureChart(month,year) {
     await deleteFilterExpenditureChart(); // Delete any existing chart
@@ -1695,20 +1671,19 @@ const fetchData = async () => {
     await Promise.all([
         fetchMembers(),
         fetchMemberCount(),
-        fetchTotalCommentsCount(),
-        fetchTodayRegistrationCount(),
         fetchAdmins(),
         fetchIncomeRecords(),
         fetchExpenditureRecords(),
         fetchEarning(),
-        renderIncomeChart(),
-        renderExpenditureChart(),
+        
         fetchEvents(),
         fetchCategories(),
         fetchInventoryCategories(),
         fetchInventoryItems(),
         setHovered(1)
     ]);
+    await renderIncomeChart();
+    await renderExpenditureChart();
 };
 
 onMounted(async () => {
@@ -2071,7 +2046,8 @@ const createPDF = async (dateFrom, dateTo) => {
 
 const notification = ref({
     title: '',
-    message: ''
+    message: '',
+    expiry_date:''
 });
 
 const openNotificationModal = () => {
@@ -2082,6 +2058,7 @@ const closeNotificationModal = () => {
     document.getElementById('notificationModal').style.display = 'none';
     notification.value.title = '';
     notification.value.message = '';
+    notification.value.expiry_date = '';
 };
 
 const saveNotification = async () => {
@@ -2101,7 +2078,7 @@ const saveNotification = async () => {
         const result = await response.json();
         localStorage.setItem('toastrMessage', 'Notification Sent Successfully!');
         closeNotificationModal(); // Close the modal after saving
-        router.push('/management');
+        router.push('/dashboard');
     } catch (error) {
         console.error('Error saving notification:', error);
         alert('Failed to create notification');
@@ -2113,37 +2090,48 @@ const userInput = ref('');
 const loading = ref(false);
 const errorMessage = ref('');
 
-// Function to send message
 const sendMessage = async () => {
-  if (userInput.value.trim() === '') return; // Prevent sending empty messages
+  if (userInput.value.trim() === '') return;
 
   const userMessage = { id: Date.now(), text: userInput.value, user: true };
-  messages.value.push(userMessage); // Add user message to the chat
-  loading.value = true; // Set loading state to true
-  errorMessage.value = ''; // Clear any previous error message
+  messages.value.push(userMessage);
+  loading.value = true;
+  errorMessage.value = '';
 
   const financeData = {
     income: incomeRecords.value,
     expenditure: expenditureRecords.value,
   };
-  console.log(financeData);
+
   try {
     const response = await axios.post('/api/chat', {
       message: userInput.value,
       financeData: financeData,
     });
 
-    const botMessage = { id: Date.now() + 1, text: response.data.reply || 'Sorry, I did not understand that.', user: false };
-    messages.value.push(botMessage); // Add bot reply to the chat
+    // Process the response to maintain formatting
+    let formattedReply = response.data.reply || 'Sorry, I did not understand that.';
+    
+    // Option 1: If using Markdown (install marked.js)
+    // formattedReply = marked.parse(formattedReply);
+    
+    // Option 2: Basic formatting (preserve line breaks)
+    formattedReply = formattedReply.replace(/\n/g, '<br>');
+
+    const botMessage = { 
+      id: Date.now() + 1, 
+      text: formattedReply, 
+      user: false 
+    };
+    messages.value.push(botMessage);
   } catch (error) {
     console.error('Error communicating with chatbot API:', error);
-    errorMessage.value = 'Failed to get a response from the AI. Please try again.'; // Set error message
+    errorMessage.value = 'Failed to get a response from the AI. Please try again.';
   } finally {
-    loading.value = false; // Reset loading state
-    scrollToBottom(); // Scroll to the bottom of the messages
+    loading.value = false;
+    scrollToBottom();
+    userInput.value = '';
   }
-
-  userInput.value = ''; // Clear input field
 };
 
 
@@ -2673,4 +2661,102 @@ hr {
   border-color: rgba(255, 255, 255, 1); /* Solid border on hover */
 }
 
+/* Notification Modal Styles */
+#notificationModal .modal-content {
+    max-width: 600px;
+    border-radius: 10px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+    padding: 30px;
+    animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-header {
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+.modal-header h2 {
+    color: #2c3e50;
+    margin-bottom: 5px;
+    font-size: 24px;
+}
+
+.modal-header p {
+    color: #7f8c8d;
+    font-size: 14px;
+    margin: 0;
+}
+
+.notification-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.notification-form .form-group {
+    margin-bottom: 0;
+}
+
+.notification-form label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #34495e;
+    font-size: 14px;
+}
+
+.notification-form input[type="text"],
+.notification-form textarea {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    background-color: #f9f9f9;
+}
+
+.notification-form input[type="text"]:focus,
+.notification-form textarea:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+    outline: none;
+    background-color: #fff;
+}
+
+.notification-form textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+
+/* Close button styling */
+#notificationModal .close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    color: #95a5a6;
+    font-size: 28px;
+    font-weight: bold;
+    transition: color 0.2s;
+}
+
+#notificationModal .close:hover,
+#notificationModal .close:focus {
+    color: #e74c3c;
+    text-decoration: none;
+    cursor: pointer;
+}
 </style>

@@ -194,13 +194,7 @@ const editedRecord = ref({});
 const formattedPurchaseDate = ref('');
 const inventory_categories = ref([]);
 
-// Initialize toastr
-toastr.options = {
-  closeButton: true,
-  progressBar: true,
-  positionClass: 'toast-top-right',
-  timeOut: 3000
-};
+
 
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A';

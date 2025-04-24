@@ -35,16 +35,24 @@
                                      class="current-poster" />
                             </div>
                             
+                            <div class="preview-image" v-if="posterFiles[n]">
+                                <label>New Image Preview {{n}}</label>
+                                <img :src="getImagePreview(posterFiles[n])" 
+                                     :alt="'New Image Preview ' + n" 
+                                     class="preview-poster" />
+                            </div>
+                            
                             <div class="file-upload">
                                 <label :for="'poster'+n">Upload New Image {{n}}</label>
-                                <div class="upload-area">
+                                <div class="upload-area" :class="{ 'has-file': posterFiles[n] }">
                                     <input type="file" 
                                            :id="'poster'+n" 
                                            accept=".png, .jpg, .jpeg" 
                                            @change="event => handleFileChange(event, n)" />
-                                    <div class="upload-hint">
+                                    <div class="upload-hint" :class="{ 'has-file': posterFiles[n] }">
                                         <i class='bx bx-cloud-upload'></i>
-                                        <span>Click to browse or drag & drop</span>
+                                        <span v-if="!posterFiles[n]">Click to browse or drag & drop</span>
+                                        <span v-else>Image {{n}} selected - click to change</span>
                                     </div>
                                 </div>
                             </div>
@@ -66,7 +74,7 @@ import { onMounted, ref } from "vue";
 import { useRoute } from 'vue-router';
 import axios from 'axios';
 import toastr from 'toastr';
-import 'toastr/build/toastr.min.css'; 
+import 'toastr/build/toastr.min.css';
 
 const route = useRoute();
 const postid = route.params.id;
@@ -78,7 +86,7 @@ const post = ref({
     eventPoster3: null,
 });
 
-const posterFiles = ref([null, null, null]);
+const posterFiles = ref({ 1: null, 2: null, 3: null });
 
 const fetchPost = async () => {
     try {
@@ -86,11 +94,22 @@ const fetchPost = async () => {
         post.value = response.data;
     } catch (error) {
         console.error(error);
+        toastr.error('Failed to load post details', 'Error');
     }
 }
 
+const getImagePreview = (file) => {
+    return URL.createObjectURL(file);
+};
+
 const handleFileChange = (event, posterNumber) => {
-    posterFiles.value[posterNumber] = event.target.files[0];
+    if (event.target.files && event.target.files[0]) {
+        posterFiles.value[posterNumber] = event.target.files[0];
+        toastr.success(`Image ${posterNumber} selected successfully!`, 'Success', {
+            timeOut: 3000,
+            positionClass: 'toast-top-right'
+        });
+    }
 };
 
 const handleSubmit = async () => {
@@ -98,21 +117,39 @@ const handleSubmit = async () => {
     formData.append('title', post.value.title);
     formData.append('description', post.value.description);
 
-    for (let i = 1; i <= 3; i++) {
-        if (posterFiles.value[i]) {
-            formData.append(`eventPoster${i}`, posterFiles.value[i]);
-        }
-    }
+    // Show uploading message
+    const uploadToast = toastr.info('Uploading images...', 'Please wait', {
+        timeOut: 0,
+        extendedTimeOut: 0
+    });
 
     try {
+        for (let i = 1; i <= 3; i++) {
+            if (posterFiles.value[i]) {
+                formData.append(`eventPoster${i}`, posterFiles.value[i]);
+            }
+        }
+
         const response = await axios.put(`/api/editpost/${postid}`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
         });
         
+        // Clear the loading toast
+        toastr.clear(uploadToast);
+        
         if (response.status === 200) {
-            window.location.href = '/forum';
+            toastr.success('Post updated successfully!', 'Success', {
+                timeOut: 3000,
+                onHidden: () => {
+                    window.location.href = '/forum';
+                }
+            });
         }
     } catch (error) {
+        toastr.clear(uploadToast);
+        toastr.error('Failed to update post. Please try again.', 'Error', {
+            timeOut: 3000
+        });
         console.error(error);
     }
 };
@@ -121,6 +158,7 @@ onMounted(() => {
     fetchPost();
 });
 </script>
+
 <style scoped>
 .edit-post-page {
     background-color: #ffffff;
@@ -144,6 +182,7 @@ onMounted(() => {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     padding: 2.5rem;
     border: 1px solid #dee2e6;
+    animation: fadeIn 0.3s ease forwards;
 }
 
 /* Header Styles */
@@ -254,6 +293,29 @@ onMounted(() => {
     padding: 8px;
 }
 
+.preview-image {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.preview-image label {
+    font-weight: 600;
+    color: #2b2d42;
+    font-size: 0.95rem;
+}
+
+.preview-poster {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 8px;
+    border: 2px solid #4ade80;
+    object-fit: contain;
+    background-color: #f0fdf4;
+    padding: 8px;
+}
+
 .file-upload {
     display: flex;
     flex-direction: column;
@@ -282,6 +344,11 @@ onMounted(() => {
     background-color: rgba(67, 97, 238, 0.05);
 }
 
+.upload-area.has-file {
+    border-color: #4ade80;
+    background-color: rgba(74, 222, 128, 0.05);
+}
+
 .upload-area input[type="file"] {
     position: absolute;
     width: 100%;
@@ -298,11 +365,21 @@ onMounted(() => {
     align-items: center;
     gap: 0.5rem;
     color: #6c757d;
+    transition: all 0.2s;
+}
+
+.upload-hint.has-file {
+    color: #4ade80;
 }
 
 .upload-hint i {
     font-size: 2rem;
     color: #4361ee;
+    transition: all 0.2s;
+}
+
+.upload-hint.has-file i {
+    color: #4ade80;
 }
 
 /* Button Styles */
@@ -357,9 +434,5 @@ onMounted(() => {
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
-}
-
-.edit-card {
-    animation: fadeIn 0.3s ease forwards;
 }
 </style>

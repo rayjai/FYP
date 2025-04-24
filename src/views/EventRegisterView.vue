@@ -261,6 +261,10 @@ onMounted(() => {
                         <span class="detail-icon">⏳</span>
                         Registration Deadline: {{ event.deadline }}
                     </div>
+                    <div class="detail-item">
+                        <span class="detail-icon">👥</span>
+                        Registrations: {{ registrationCount }}/{{ event.totalmaxRegistration }}
+                    </div>
                 </div>
             </div>
         </div>
